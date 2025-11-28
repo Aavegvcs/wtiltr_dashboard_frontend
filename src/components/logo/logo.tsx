@@ -6,7 +6,7 @@ import { useId, forwardRef } from 'react';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 
-import AccumenLogo from 'src/components/images/logo-accumen.svg'
+import WTILogo from 'src/components/images/WtiLogo.svg'
 
 import { RouterLink } from 'src/routes/components';
 
@@ -197,7 +197,7 @@ const singleLogo = (
   <Box
     alt="Accumen Logo"
     component="img"
-    src={AccumenLogo}
+    src={WTILogo}
     width="100%"
     height="100%"
   />
@@ -207,7 +207,7 @@ const singleLogo = (
   <Box
     alt="Accumen Logo"
     component="img"
-    src={AccumenLogo}
+    src={WTILogo}
     width="100%"
     height="100%"
   />

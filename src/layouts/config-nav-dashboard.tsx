@@ -60,11 +60,18 @@ export const useNavData = (): NavItem[] => {
       icon: getParentIcon(PeopleIcon),
       children: [
         {
+          title: 'Corporate',
+          path: '/corporate-view',
+          icon: getChildIcon(BranchIcon),
+          permission: 'corporate-view',
+        },
+        {
           title: 'Branch',
           path: '/branch-view',
           icon: getChildIcon(BranchIcon),
           permission: 'branch-view',
         },
+
         {
           title: 'Employee List',
           path: '/company-employee',

@@ -1,9 +1,9 @@
 import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
-import { BranchView } from 'src/sections/branch';
+import { CorporateView } from 'src/sections/corporate/corporate-view';
 
-import { UserView } from 'src/sections/user/view';
+
 
 // ----------------------------------------------------------------------
 
@@ -11,9 +11,9 @@ export default function Page() {
   return (
     <>
       <Helmet>
-        <title> {`Branch - ${CONFIG.appName}`}</title>
+        <title> {`Corporate - ${CONFIG.appName}`}</title>
       </Helmet>
-      <BranchView />
+      <CorporateView />
       
     </>
   );

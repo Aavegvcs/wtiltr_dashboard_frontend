@@ -92,7 +92,7 @@ export type ConfigValue = {
 };
 
 export const CONFIG: ConfigValue = {
-  appName: 'Acumen',
+  appName: 'WTi',
   appVersion: packageJson.version,
 };
 

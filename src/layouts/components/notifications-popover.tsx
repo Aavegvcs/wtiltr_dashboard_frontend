@@ -53,37 +53,37 @@ export function NotificationsPopover({ sx, ...other }: NotificationsPopoverProps
   const roleName = user?.role.name;
   const loggedUserId = user?.id;
 
-  useEffect(() => {
-    const fetchNotification = async () => {
-      try {
-        const payload = {
-          userId: loggedUserId,
-        };
-        const response = await axiosInstance.post(
-          'insurance-escalation/getNotificationForDashboard',
-          payload
-        );
-        const data = response.data.data;
-        const mappedData = data.map((notification: any) => ({
-          id: notification.id,
-          type: notification.type,
-          title: notification.title,
-          isRead: notification.is_read ? true : false,
-          description: notification.message,
-          postedAt: notification.sentAt,
-          avatarUrl: '/assets/icons/notification/ic-notification-chat.svg',
-          tiketId: notification.ticket_id,
-        }));
-        setNotifications(mappedData);
-        const totalUnreadMessage = mappedData.filter((item: any) => !item.isRead).length;
-        setTotalUnRead(totalUnreadMessage);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        return [];
-      }
-    };
-    fetchNotification();
-  }, []);
+  // useEffect(() => {
+  //   const fetchNotification = async () => {
+  //     try {
+  //       const payload = {
+  //         userId: loggedUserId,
+  //       };
+  //       const response = await axiosInstance.post(
+  //         'insurance-escalation/getNotificationForDashboard',
+  //         payload
+  //       );
+  //       const data = response.data.data;
+  //       const mappedData = data.map((notification: any) => ({
+  //         id: notification.id,
+  //         type: notification.type,
+  //         title: notification.title,
+  //         isRead: notification.is_read ? true : false,
+  //         description: notification.message,
+  //         postedAt: notification.sentAt,
+  //         avatarUrl: '/assets/icons/notification/ic-notification-chat.svg',
+  //         tiketId: notification.ticket_id,
+  //       }));
+  //       setNotifications(mappedData);
+  //       const totalUnreadMessage = mappedData.filter((item: any) => !item.isRead).length;
+  //       setTotalUnRead(totalUnreadMessage);
+  //     } catch (error) {
+  //       console.error('Error fetching notifications:', error);
+  //       return [];
+  //     }
+  //   };
+  //   fetchNotification();
+  // }, []);
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     setOpenPopover(event.currentTarget);
   }, []);

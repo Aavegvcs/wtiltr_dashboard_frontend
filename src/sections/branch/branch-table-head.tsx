@@ -1,33 +1,28 @@
-import Box from '@mui/material/Box';
-import TableRow from '@mui/material/TableRow';
-import Checkbox from '@mui/material/Checkbox';
+import React from 'react';
 import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
+import Checkbox from '@mui/material/Checkbox';
 import TableSortLabel from '@mui/material/TableSortLabel';
 
-import { visuallyHidden } from './utils';
+export type HeadLabel = {
+  id: string;
+  label: string;
+  align?: 'left' | 'center' | 'right';
+  minWidth?: number;
+};
 
-// ----------------------------------------------------------------------
-
-type BranchTableHeadProps = {
+type Props = {
   orderBy: string;
   rowCount: number;
   numSelected: number;
   order: 'asc' | 'desc';
   onSort: (id: string) => void;
-  headLabel: Record<string, any>[];
+  headLabel: HeadLabel[];
   onSelectAllRows: (checked: boolean) => void;
 };
 
-export function BranchTableHead({
-  order,
-  onSort,
-  orderBy,
-  rowCount,
-  headLabel,
-  numSelected,
-  onSelectAllRows,
-}: BranchTableHeadProps) {
+export default function BranchTableHead({ order, onSort, orderBy, rowCount, headLabel, numSelected, onSelectAllRows }: Props) {
   return (
     <TableHead>
       <TableRow>
@@ -35,31 +30,13 @@ export function BranchTableHead({
           <Checkbox
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              onSelectAllRows(event.target.checked)
-            }
+            onChange={(e) => onSelectAllRows(e.target.checked)}
           />
         </TableCell>
-
-        {headLabel.map((headCell) => (
-          <TableCell
-            key={headCell.id}
-            align={headCell.align || 'left'}
-            sortDirection={orderBy === headCell.id ? order : false}
-            sx={{ width: headCell.width, minWidth: headCell.minWidth }}
-          >
-            <TableSortLabel
-              hideSortIcon
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : 'asc'}
-              onClick={() => onSort(headCell.id)}
-            >
-              {headCell.label}
-              {orderBy === headCell.id ? (
-                <Box sx={{ ...visuallyHidden }}>
-                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                </Box>
-              ) : null}
+        {headLabel.map((h) => (
+          <TableCell key={h.id} align={h.align || 'left'} sortDirection={orderBy === h.id ? order : false} sx={{ minWidth: h.minWidth }}>
+            <TableSortLabel active={orderBy === h.id} direction={orderBy === h.id ? order : 'asc'} onClick={() => onSort(h.id)}>
+              {h.label}
             </TableSortLabel>
           </TableCell>
         ))}

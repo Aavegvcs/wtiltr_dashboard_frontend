@@ -36,7 +36,7 @@ export const AgentDashboardPage = lazy(() => import('src/pages/agent-dashboard')
 export const RolePermissionMappingViewPage = lazy(() => import('src/pages/role-permission-mapping'));
 export const PermissionViewPage = lazy(() => import('src/pages/permission-view'));
 export const BranchViewPage = lazy(()=> import('src/pages/branch'));
-
+export const CorporateViewPage = lazy(()=> import('src/pages/corporate'));
 export function RestrictedRoute({
   children,
   permission,
@@ -203,6 +203,14 @@ export function Router() {
                 element: (
                   <RestrictedRoute permission="branch-view">
                     <BranchViewPage />
+                  </RestrictedRoute>
+                ),
+              },
+               {
+                path: 'corporate-view',
+                element: (
+                  <RestrictedRoute permission="corporate-view">
+                    <CorporateViewPage />
                   </RestrictedRoute>
                 ),
               },

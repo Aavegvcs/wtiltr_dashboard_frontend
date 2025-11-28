@@ -1,6 +1,4 @@
-import type {BranchProps } from './branch-table-row';
-
-// ----------------------------------------------------------------------
+import { BranchItem } from './types';
 
 export const visuallyHidden = {
   border: 0,
@@ -14,94 +12,18 @@ export const visuallyHidden = {
   clip: 'rect(0 0 0 0)',
 } as const;
 
-// ----------------------------------------------------------------------
-
 export function emptyRows(page: number, rowsPerPage: number, arrayLength: number) {
   return page ? Math.max(0, (1 + page) * rowsPerPage - arrayLength) : 0;
 }
 
-// ----------------------------------------------------------------------
-
-function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-// ----------------------------------------------------------------------
-
-export function getComparator<Key extends keyof any>(
-  order: 'asc' | 'desc',
-  orderBy: Key
-): (
-  a: {
-    [key in Key]: number | string;
-  },
-  b: {
-    [key in Key]: number | string;
-  }
-) => number {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-// ----------------------------------------------------------------------
-
-type ApplyFilterProps = {
-  inputData: BranchProps[];
-  filterName: string;
-  comparator: (a: any, b: any) => number;
-};
-
-export function applyFilter({ inputData, comparator, filterName }: ApplyFilterProps) {
-  const stabilizedThis = inputData.map((el, index) => [el, index] as const);
-
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-
-  inputData = stabilizedThis.map((el) => el[0]);
-
-  if (filterName) {
-    inputData = inputData.filter(
-      (user) => user.branchName.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
-    );
-  }
-
-  return inputData;
-}
-
-
-
-type ApplyFilterPropsForBranch = {
-  inputData: BranchProps[];
-  filterName: string;
-  comparator: (a: any, b: any) => number;
-};
-
-export function applyFilterForBranch({ inputData, comparator, filterName }: ApplyFilterPropsForBranch) {
-  const stabilizedThis = inputData.map((el, index) => [el, index] as const);
-
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-
-  inputData = stabilizedThis.map((el) => el[0]);
-
-  if (filterName) {
-    inputData = inputData.filter(
-      (user) => user.branchName.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
-    );
-  }
-
-  return inputData;
+export function filterBranches(data: BranchItem[], query: string) {
+  const q = query.trim().toLowerCase();
+  if (!q) return data;
+  return data.filter((b) =>
+    (b.name ?? '').toString().toLowerCase().includes(q) ||
+    (b.branchCode ?? '').toString().toLowerCase().includes(q) ||
+    (b.id ?? '').toString().toLowerCase().includes(q) ||
+    (b.corporateName ?? '').toString().toLowerCase().includes(q) ||
+    (b.stateName ?? '').toString().toLowerCase().includes(q)
+  );
 }
