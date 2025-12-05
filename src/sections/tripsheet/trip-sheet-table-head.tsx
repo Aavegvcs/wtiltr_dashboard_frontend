@@ -1,11 +1,10 @@
-
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Checkbox from '@mui/material/Checkbox';
-import { visuallyHidden } from './utils';
 import Box from '@mui/material/Box';
+import { visuallyHidden } from '../cvd-mapping/utils';
 
 type HeadLabel = {
   id: string;
@@ -13,7 +12,7 @@ type HeadLabel = {
   align?: 'left' | 'center' | 'right';
 };
 
-type CorporateTableHeadProps = {
+type Props = {
   order: 'asc' | 'desc';
   orderBy: string;
   rowCount: number;
@@ -23,15 +22,7 @@ type CorporateTableHeadProps = {
   headLabel: HeadLabel[];
 };
 
-export function CorporateTableHead({
-  order,
-  orderBy,
-  rowCount,
-  numSelected,
-  onSort,
-  onSelectAllRows,
-  headLabel,
-}: CorporateTableHeadProps) {
+export function TripSheetTableHead({ order, orderBy, rowCount, numSelected, onSort, onSelectAllRows, headLabel }: Props) {
   return (
     <TableHead>
       <TableRow>
@@ -43,24 +34,11 @@ export function CorporateTableHead({
           />
         </TableCell>
 
-        {headLabel.map((headCell) => (
-          <TableCell
-            key={headCell.id}
-            align={headCell.align || 'center'}
-            sortDirection={orderBy === headCell.id ? order : false}
-          >
-            <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : 'asc'}
-              onClick={() => onSort(headCell.id)}
-              sx={{ fontWeight: 'bold' }}
-            >
-              {headCell.label}
-              {orderBy === headCell.id ? (
-                <Box component="span" sx={visuallyHidden}>
-                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                </Box>
-              ) : null}
+        {headLabel.map((h) => (
+          <TableCell key={h.id} align={h.align || 'center'} sortDirection={orderBy === h.id ? order : false}>
+            <TableSortLabel active={orderBy === h.id} direction={orderBy === h.id ? order : 'asc'} onClick={() => onSort(h.id)}>
+              {h.label}
+              {orderBy === h.id && <Box component="span" sx={visuallyHidden}>{order === 'desc' ? 'sorted descending' : 'sorted ascending'}</Box>}
             </TableSortLabel>
           </TableCell>
         ))}

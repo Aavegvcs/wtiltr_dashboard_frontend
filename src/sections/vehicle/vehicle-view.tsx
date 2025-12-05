@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, ChangeEvent } from 'react';
 import axiosInstance from 'src/config-global';
+
 import {
   CircularProgress,
   Stack,
@@ -9,6 +10,7 @@ import {
   TableRow,
   TableCell,
 } from '@mui/material';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
@@ -18,13 +20,8 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Grid';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import InputLabel from '@mui/material/InputLabel';
-import FormControl from '@mui/material/FormControl';
 import Switch from '@mui/material/Switch';
 
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -32,15 +29,18 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import toast, { Toaster } from 'react-hot-toast';
 
-import { CorporateTableHead } from './corporate-table-head';
-import { CorporateTableRow } from './corporate-table-row';
-import { CorporateTableToolbar } from './corporate-table-toolbar';
-import CorporateBulkUploadModal from './corporate-bulk-upload';
-import { applyFilterCorporate, emptyRows, getComparator } from './utils';
+import { VehicleTableHead } from './vehicle-table-head';
+import { VehicleTableRow } from './vehicle-table-row';
+import { VehicleTableToolbar } from './vehicle-table-toolbar';
+import VehicleBulkUploadModal from './vehicle-bulk-upload';
+import VehicleDocumentsUpload from './vehicle-documents-upload';
+
+import { applyFilterVehicle, emptyRows, getComparator } from './utils';
 import { TableEmptyRows } from './table-empty-rows';
 import { TableNoData } from './table-no-data';
-import { CorporateProps } from './types';
+import { VehicleProps } from './types';
 
+// -------------------- Modal Style --------------------
 const modalStyle = {
   position: 'absolute' as 'absolute',
   top: '50%',
@@ -55,21 +55,19 @@ const modalStyle = {
   overflowY: 'auto',
 };
 
-// Table columns with correct align type
+// -------------------- Table Columns --------------------
 const columns = [
-  { id: 'corporateCode', label: 'Corporate Code', align: 'center' as const },
-  { id: 'corporateName', label: 'Corporate Name', align: 'center' as const },
-  { id: 'phoneNumber', label: 'Phone', align: 'center' as const },
-  { id: 'email', label: 'Email', align: 'center' as const },
-  { id: 'state', label: 'State', align: 'center' as const },
-  { id: 'country', label: 'Country', align: 'center' as const },
-  { id: 'status', label: 'Status', align: 'center' as const },
+  { id: 'vehicleNumber', label: 'Vehicle Number', align: 'center' as const },
+  { id: 'vehicleName', label: 'Vehicle Name', align: 'center' as const },
+  { id: 'vehicleModel', label: 'Model', align: 'center' as const },
+  { id: 'isActive', label: 'Status', align: 'center' as const },
   { id: 'action', label: 'Action', align: 'center' as const },
 ];
 
+// -------------------- Table Hook --------------------
 export function useTable() {
   const [page, setPage] = useState(0);
-  const [orderBy, setOrderBy] = useState('corporateName');
+  const [orderBy, setOrderBy] = useState('vehicleName');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selected, setSelected] = useState<string[]>([]);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -92,6 +90,7 @@ export function useTable() {
   }, []);
 
   const onResetPage = () => setPage(0);
+
   const onChangePage = useCallback((_: unknown, newPage: number) => setPage(newPage), []);
   const onChangeRowsPerPage = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(e.target.value, 10));
@@ -113,15 +112,14 @@ export function useTable() {
   };
 }
 
-export function CorporateView() {
+// -------------------- Main Component --------------------
+export function VehicleView() {
   const table = useTable();
 
   const [filterName, setFilterName] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
-  const [corporates, setCorporates] = useState<CorporateProps[]>([]);
-  const [stateList, setStateList] = useState<{ id: number; name: string }[]>([]);
-  const [countryList, setCountryList] = useState<{ id: number; name: string }[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [buttonLoading, setButtonLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -129,62 +127,42 @@ export function CorporateView() {
   const [open, setOpen] = useState(false);
   const [openBulkModal, setOpenBulkModal] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [editCorporate, setEditCorporate] = useState<CorporateProps | null>(null);
+  const [editVehicle, setEditVehicle] = useState<VehicleProps | null>(null);
 
-  // Form state — country/state are now objects or null
-  const [newCorporate, setNewCorporate] = useState<Omit<CorporateProps, 'id'>>({
-    corporateCode: '',
-    corporateName: '',
-    phoneNumber: '',
-    secondaryPhoneNumber: '',
-    email: '',
-    gst: '',
-    panNumber: '',
-    address: '',
-    currency: '',
-    country: null,
-    state: null,
+  // -------------------- Form State --------------------
+  const [vehicleForm, setVehicleForm] = useState<VehicleProps>({
+    vehicleNumber: '',
+    vehicleName: '',
+    vehicleModel: '',
+    documents: {},
     isActive: true,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Fetch data
+  // -------------------- Fetch Vehicles --------------------
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [corpRes, statesRes, countriesRes] = await Promise.all([
-          axiosInstance.post('companies/list'),
-          axiosInstance.get('/states'),
-          axiosInstance.get('/countries'),
-        ]);
-        const resData = corpRes.data?.data;
-        const items = corpRes.data?.data?.items || [];
+        const res = await axiosInstance.get('/vehicle/list');
 
-        setCorporates(
+        console.log('Fetched vehicles:', res.data);
+        const items = res.data?.data?.result?.data || [];
+
+        setVehicles(
           items.map((item: any) => ({
             id: item.id,
-            corporateCode: item.corporateCode || '',
-            corporateName: item.corporateName || '',
-            phoneNumber: item.phoneNumber || '',
-            secondaryPhoneNumber: item.secondaryPhoneNumber || '',
-            email: item.email || '',
-            gst: item.gst || '',
-            panNumber: item.panNumber || '',
-            address: item.address || '',
-            currency: item.currency || '',
-            country: item.country ? { id: item.country.id, name: item.country.name } : null,
-            state: item.state ? { id: item.state.id, name: item.state.name } : null,
-            isActive: item.isActive ?? true,
+            vehicleNumber: item.vehicleNumber,
+            vehicleName: item.vehicleName,
+            vehicleModel: item.vehicleModel,
+            isActive: item.isActive,
+            documents: item.documents || {},
           }))
         );
-
-        setStateList(statesRes.data.data || []);
-        setCountryList(countriesRes.data.data || []);
       } catch (err) {
         console.error(err);
-        toast.error('Failed to load data');
+        toast.error('Failed to load vehicles');
       } finally {
         setLoading(false);
       }
@@ -195,44 +173,30 @@ export function CorporateView() {
 
   const refreshData = () => setRefreshTrigger((v) => v + 1);
 
-  // Modal handlers
+  // -------------------- Modal Handlers --------------------
   const handleOpenAdd = () => {
     setModalMode('add');
-    setEditCorporate(null);
+    setEditVehicle(null);
     setErrors({});
-    setNewCorporate({
-      corporateCode: '',
-      corporateName: '',
-      phoneNumber: '',
-      secondaryPhoneNumber: '',
-      email: '',
-      gst: '',
-      panNumber: '',
-      address: '',
-      currency: '',
-      country: null,
-      state: null,
+    setVehicleForm({
+      vehicleNumber: '',
+      vehicleName: '',
+      vehicleModel: '',
+      documents: {},
       isActive: true,
     });
     setOpen(true);
   };
 
-  const handleOpenEdit = (row: CorporateProps) => {
+  const handleOpenEdit = (row: VehicleProps) => {
     setModalMode('edit');
-    setEditCorporate(row);
+    setEditVehicle(row);
     setErrors({});
-    setNewCorporate({
-      corporateCode: row.corporateCode,
-      corporateName: row.corporateName,
-      phoneNumber: row.phoneNumber,
-      secondaryPhoneNumber: row.secondaryPhoneNumber || '',
-      email: row.email || '',
-      gst: row.gst || '',
-      panNumber: row.panNumber || '',
-      address: row.address || '',
-      currency: row.currency || '',
-      country: row.country, // object or null
-      state: row.state, // object or null
+    setVehicleForm({
+      vehicleNumber: row.vehicleNumber,
+      vehicleName: row.vehicleName,
+      vehicleModel: row.vehicleModel,
+      documents: row.documents || {},
       isActive: row.isActive,
     });
     setOpen(true);
@@ -240,74 +204,69 @@ export function CorporateView() {
 
   const handleClose = () => {
     setOpen(false);
-    setEditCorporate(null);
+    setEditVehicle(null);
     setErrors({});
   };
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
-  ) => {
-    const { name, value } = e.target as HTMLInputElement;
-
-    if (name === 'country' || name === 'state') {
-      const selected = value ? { id: Number(value), name: '' } : null;
-      const list = name === 'country' ? countryList : stateList;
-      const found = list.find((item) => item.id === Number(value));
-      setNewCorporate((prev) => ({ ...prev, [name]: found || selected }));
-    } else {
-      setNewCorporate((prev) => ({ ...prev, [name]: value }));
-    }
+  // -------------------- Form Change --------------------
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setVehicleForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const validate = () => {
     const err: Record<string, string> = {};
-    if (!newCorporate.corporateCode.trim()) err.corporateCode = 'Required';
-    if (!newCorporate.corporateName.trim()) err.corporateName = 'Required';
+    if (!vehicleForm.vehicleNumber.trim()) err.vehicleNumber = 'Required';
+    if (!vehicleForm.vehicleName.trim()) err.vehicleName = 'Required';
+    if (!vehicleForm.vehicleModel.trim()) err.vehicleModel = 'Required';
     setErrors(err);
     return Object.keys(err).length === 0;
   };
 
+  // -------------------- Submit Form --------------------
   const handleSubmit = async () => {
     if (!validate()) return;
 
     const payload = {
-      ...newCorporate,
-      country: newCorporate.country?.id || null,
-      state: newCorporate.state?.id || null,
+      ...vehicleForm,
+      documents: vehicleForm.documents,
     };
 
     try {
       setButtonLoading(true);
+
       if (modalMode === 'add') {
-        await axiosInstance.post('companies/create', payload);
-        toast.success('Corporate created!');
+        await axiosInstance.post('/vehicle/create', payload);
+        toast.success('Vehicle created!');
       } else {
-        await axiosInstance.put('companies/update', { id: editCorporate?.id, ...payload });
-        toast.success('Corporate updated!');
+        await axiosInstance.patch(`/vehicle/update/${editVehicle?.id}`, payload);
+        toast.success('Vehicle updated!');
       }
+
       refreshData();
       handleClose();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Operation failed');
-      console.log(err.response);
     } finally {
       setButtonLoading(false);
     }
   };
 
-  const handleDelete = async (row: CorporateProps) => {
-    if (!confirm('Delete this corporate?')) return;
+  // -------------------- Delete Vehicle --------------------
+  const handleDelete = async (row: VehicleProps) => {
+    if (!confirm('Delete this vehicle?')) return;
+
     try {
-      await axiosInstance.post('companies/delete', { id: row.id });
-      toast.success('Deleted');
+      await axiosInstance.delete(`/vehicle/delete/${row.id}`);
+      toast.success('Vehicle deleted');
       refreshData();
     } catch {
       toast.error('Delete failed');
     }
   };
 
-  const dataFiltered = applyFilterCorporate({
-    inputData: corporates,
+  const dataFiltered = applyFilterVehicle({
+    inputData: vehicles,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
     filterStatus,
@@ -315,13 +274,14 @@ export function CorporateView() {
 
   const notFound = !dataFiltered.length && !!filterName;
 
+  // -------------------- UI Rendering --------------------
   return (
     <DashboardContent>
       <Toaster position="top-right" />
 
       <Box mb={5}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">Corporate</Typography>
+          <Typography variant="h4">Vehicle Management</Typography>
 
           <Stack direction="row" spacing={1}>
             <IconButton onClick={refreshData} color="primary">
@@ -330,7 +290,7 @@ export function CorporateView() {
 
             <Button
               variant="outlined"
-              startIcon={<FileUploadIcon />}
+              startIcon={<Iconify icon="solar:upload-bold" />}
               onClick={() => setOpenBulkModal(true)}
             >
               Bulk Upload
@@ -341,14 +301,15 @@ export function CorporateView() {
               startIcon={<Iconify icon="mingcute:add-line" />}
               onClick={handleOpenAdd}
             >
-              Add Corporate
+              Add Vehicle
             </Button>
           </Stack>
         </Stack>
       </Box>
 
+      {/* Table */}
       <Card>
-        <CorporateTableToolbar
+        <VehicleTableToolbar
           numSelected={table.selected.length}
           filterName={filterName}
           onFilterName={(e) => {
@@ -365,7 +326,7 @@ export function CorporateView() {
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 900 }}>
-              <CorporateTableHead
+              <VehicleTableHead
                 order={table.order}
                 orderBy={table.orderBy}
                 rowCount={dataFiltered.length}
@@ -384,7 +345,7 @@ export function CorporateView() {
                 {loading
                   ? [...Array(8)].map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell colSpan={9}>
+                        <TableCell colSpan={7}>
                           <Skeleton height={60} />
                         </TableCell>
                       </TableRow>
@@ -395,13 +356,13 @@ export function CorporateView() {
                         table.page * table.rowsPerPage + table.rowsPerPage
                       )
                       .map((row) => (
-                        <CorporateTableRow
+                        <VehicleTableRow
                           key={row.id}
                           row={row}
                           selected={table.selected.includes(String(row.id))}
                           onSelectRow={() => table.onSelectRow(String(row.id))}
                           onEdit={handleOpenEdit}
-                         
+                          // onDelete={handleDelete}
                         />
                       ))}
 
@@ -409,6 +370,7 @@ export function CorporateView() {
                   height={70}
                   emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
                 />
+
                 {notFound && <TableNoData searchQuery={filterName} />}
               </TableBody>
             </Table>
@@ -430,100 +392,56 @@ export function CorporateView() {
       <Modal open={open} onClose={handleClose}>
         <Box sx={modalStyle}>
           <Typography variant="h5" mb={3}>
-            {modalMode === 'add' ? 'Create New Corporate' : 'Edit Corporate'}
+            {modalMode === 'add' ? 'Add Vehicle' : 'Edit Vehicle'}
           </Typography>
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Corporate Code *"
-                name="corporateCode"
-                value={newCorporate.corporateCode}
+                label="Vehicle Number *"
+                name="vehicleNumber"
+                value={vehicleForm.vehicleNumber}
                 onChange={handleChange}
-                error={!!errors.corporateCode}
-                helperText={errors.corporateCode}
-                disabled={modalMode === 'edit'}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Corporate Name *"
-                name="corporateName"
-                value={newCorporate.corporateName}
-                onChange={handleChange}
-                error={!!errors.corporateName}
-                helperText={errors.corporateName}
+                error={!!errors.vehicleNumber}
+                helperText={errors.vehicleNumber}
               />
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Phone"
-                name="phoneNumber"
-                value={newCorporate.phoneNumber}
+                label="Vehicle Name *"
+                name="vehicleName"
+                value={vehicleForm.vehicleName}
                 onChange={handleChange}
+                error={!!errors.vehicleName}
+                helperText={errors.vehicleName}
               />
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Email"
-                name="email"
-                value={newCorporate.email}
+                label="Vehicle Model *"
+                name="vehicleModel"
+                value={vehicleForm.vehicleModel}
                 onChange={handleChange}
+                error={!!errors.vehicleModel}
+                helperText={errors.vehicleModel}
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Country</InputLabel>
-                <Select
-                  name="country"
-                  // value={newCorporate.country?.id ?? ''}
-                  value={(newCorporate.country?.id ?? '').toString()}
-                  onChange={handleChange}
-                  label="Country"
-                >
-                  <MenuItem value="">None</MenuItem>
-                  {countryList.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>State</InputLabel>
-                <Select
-                  name="state"
-                  // value={newCorporate.state?.id ?? ''}
-                  value={(newCorporate.state?.id ?? '').toString()}
-                  onChange={handleChange}
-                  label="State"
-                >
-                  <MenuItem value="">None</MenuItem>
-                  {stateList.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>
-                      {s.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
+            {/* Document Upload */}
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address"
-                name="address"
-                value={newCorporate.address}
-                onChange={handleChange}
+              <VehicleDocumentsUpload
+                value={vehicleForm.documents}
+                onChange={(d) =>
+                  setVehicleForm((prev) => ({
+                    ...prev,
+                    documents: d,
+                  }))
+                }
               />
             </Grid>
 
@@ -531,8 +449,8 @@ export function CorporateView() {
               <Box>
                 <Typography component="span">Active Status</Typography>
                 <Switch
-                  checked={newCorporate.isActive}
-                  onChange={(e) => setNewCorporate((p) => ({ ...p, isActive: e.target.checked }))}
+                  checked={vehicleForm.isActive}
+                  onChange={(e) => setVehicleForm((p) => ({ ...p, isActive: e.target.checked }))}
                 />
               </Box>
 
@@ -540,6 +458,7 @@ export function CorporateView() {
                 <Button variant="outlined" onClick={handleClose}>
                   Cancel
                 </Button>
+
                 <Button variant="contained" onClick={handleSubmit} disabled={buttonLoading}>
                   {buttonLoading ? (
                     <CircularProgress size={22} />
@@ -555,7 +474,8 @@ export function CorporateView() {
         </Box>
       </Modal>
 
-      <CorporateBulkUploadModal
+      {/* Bulk Upload Modal */}
+      <VehicleBulkUploadModal
         open={openBulkModal}
         onClose={() => setOpenBulkModal(false)}
         refreshData={refreshData}

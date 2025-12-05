@@ -633,7 +633,7 @@ export function OverviewAnalyticsView() {
         <Typography variant="h4" flexGrow={1} sx={{ mb: { xs: 3, md: 5 } }}>
           Hi, Welcome back 👋
         </Typography>
-        <Button
+        {/* <Button
           variant="contained"
           startIcon={<Iconify icon="mingcute:add-line" />}
           onClick={handleCreateMore}
@@ -645,12 +645,12 @@ export function OverviewAnalyticsView() {
           }}
         >
           Create Ticket
-        </Button>
+        </Button> */}
       </Box>
 
       <Grid container spacing={3}>
         <Grid xs={12} sm={6} md={4}>
-          <AnalyticsWidgetSummary
+          {/* <AnalyticsWidgetSummary
             title={selectedFilter}
             percent={stats?.growth || 0}
             total={stats?.total_tickets || 0}
@@ -670,7 +670,7 @@ export function OverviewAnalyticsView() {
             preTotalClosed={preStats?.total_closed || 0}
             preTotalSold = {preStats?.total_sold || 0}
             onFilterChange={setSelectedFilter}
-          />
+          /> */}
         </Grid>
 
         {/* <Grid xs={12} sm={6} md={4}>
@@ -730,7 +730,7 @@ export function OverviewAnalyticsView() {
         <Grid xs={12} md={6} lg={4}>
           <AnalyticsCustomerAge
             title={userDetails?.totalUser}
-            subheader="Total Customer"
+            // subheader="Total Customer"
             chart={{
               colors: ['#1E88E5', '#00897B', '#388E3C', '#F57C00', '#8E24AA', '#D32F2F'],
               series: [
@@ -747,7 +747,7 @@ export function OverviewAnalyticsView() {
 
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsSoldPolicy
-            title="Sold Policy"
+            // title="Sold Policy"
             subheader={
               totalSoldStats
                 ? `${totalSoldStats.total_growth}% growth from last year`

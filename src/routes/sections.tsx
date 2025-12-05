@@ -37,6 +37,11 @@ export const RolePermissionMappingViewPage = lazy(() => import('src/pages/role-p
 export const PermissionViewPage = lazy(() => import('src/pages/permission-view'));
 export const BranchViewPage = lazy(()=> import('src/pages/branch'));
 export const CorporateViewPage = lazy(()=> import('src/pages/corporate'));
+export const VehicleViewPage = lazy(()=> import('src/pages/vehicle'));
+export const DriverViewPage = lazy(()=> import('src/pages/driver'));
+export const CvdViewPage = lazy(()=> import('src/pages/cvd-mapping'));
+export const TripSheetViewPage = lazy(()=> import('src/pages/trip-sheet'));
+export const AdminSheetViewPage = lazy(()=> import('src/pages/admin-sheet'));
 export function RestrictedRoute({
   children,
   permission,
@@ -211,6 +216,47 @@ export function Router() {
                 element: (
                   <RestrictedRoute permission="corporate-view">
                     <CorporateViewPage />
+                  </RestrictedRoute>
+                ),
+              },
+             
+              {
+                path: 'vehicle-view',
+                element: (
+                  <RestrictedRoute permission="vehicle-view">
+                    <VehicleViewPage />
+                  </RestrictedRoute>
+                ),
+              },
+              {
+                path: 'driver-view',
+                element: (
+                  <RestrictedRoute permission="driver-view">
+                    <DriverViewPage />
+                  </RestrictedRoute>
+                ),
+              },
+              {
+                path: 'cvd-mapping-view',
+                element: (
+                  <RestrictedRoute permission="cvd-mapping-view">
+                    <CvdViewPage />
+                  </RestrictedRoute>
+                ),
+              },
+              {
+                path: 'trip-sheet-view',
+                element: (
+                  <RestrictedRoute permission="trip-sheet-view">
+                    <TripSheetViewPage />
+                  </RestrictedRoute>
+                ),
+              },
+               {
+                path: 'admin-sheet-view',
+                element: (
+                  <RestrictedRoute permission="admin-sheet-view">
+                    <AdminSheetViewPage />
                   </RestrictedRoute>
                 ),
               },

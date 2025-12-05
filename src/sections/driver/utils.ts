@@ -1,4 +1,3 @@
-
 export function emptyRows(page: number, rowsPerPage: number, arrayLength: number) {
   return page > 0 ? Math.max(0, (1 + page) * rowsPerPage - arrayLength) : 0;
 }
@@ -30,38 +29,40 @@ export const visuallyHidden = {
   clip: 'rect(0 0 0 0)',
 } as const;
 
-type ApplyFilterProps = {
+type ApplyFilterDriverProps = {
   inputData: any[];
   comparator: (a: any, b: any) => number;
   filterName: string;
   filterStatus: 'all' | 'active' | 'inactive';
 };
 
-export function applyFilterCorporate({
+export function applyFilterDriver({
   inputData,
   comparator,
   filterName,
   filterStatus,
-}: ApplyFilterProps) {
+}: ApplyFilterDriverProps) {
   const stabilized = inputData.map((el, index) => [el, index] as const);
   stabilized.sort((a, b) => {
     const order = comparator(a[0], b[0]);
     if (order !== 0) return order;
     return a[1] - b[1];
   });
+
   let data = stabilized.map((el) => el[0]);
 
+  // Search filter
   if (filterName) {
     const keyword = filterName.toLowerCase();
     data = data.filter(
       (item: any) =>
-        item.corporateName?.toLowerCase().includes(keyword) ||
-        item.corporateCode?.toLowerCase().includes(keyword) ||
-        item.phoneNumber?.includes(keyword) ||
-        item.email?.toLowerCase().includes(keyword)
+        item.name?.toLowerCase().includes(keyword) ||
+        item.mobileNumber?.toLowerCase().includes(keyword) ||
+        item.panNumber?.toLowerCase().includes(keyword)
     );
   }
 
+  // Status filter
   if (filterStatus !== 'all') {
     const isActive = filterStatus === 'active';
     data = data.filter((item: any) => item.isActive === isActive);

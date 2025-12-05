@@ -1,11 +1,11 @@
-
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Checkbox from '@mui/material/Checkbox';
-import { visuallyHidden } from './utils';
 import Box from '@mui/material/Box';
+
+import { visuallyHidden } from './utils';
 
 type HeadLabel = {
   id: string;
@@ -13,7 +13,7 @@ type HeadLabel = {
   align?: 'left' | 'center' | 'right';
 };
 
-type CorporateTableHeadProps = {
+type DriverTableHeadProps = {
   order: 'asc' | 'desc';
   orderBy: string;
   rowCount: number;
@@ -23,7 +23,7 @@ type CorporateTableHeadProps = {
   headLabel: HeadLabel[];
 };
 
-export function CorporateTableHead({
+export function DriverTableHead({
   order,
   orderBy,
   rowCount,
@@ -31,7 +31,7 @@ export function CorporateTableHead({
   onSort,
   onSelectAllRows,
   headLabel,
-}: CorporateTableHeadProps) {
+}: DriverTableHeadProps) {
   return (
     <TableHead>
       <TableRow>
@@ -56,11 +56,11 @@ export function CorporateTableHead({
               sx={{ fontWeight: 'bold' }}
             >
               {headCell.label}
-              {orderBy === headCell.id ? (
+              {orderBy === headCell.id && (
                 <Box component="span" sx={visuallyHidden}>
                   {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
                 </Box>
-              ) : null}
+              )}
             </TableSortLabel>
           </TableCell>
         ))}

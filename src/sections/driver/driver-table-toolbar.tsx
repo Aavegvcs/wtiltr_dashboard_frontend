@@ -1,4 +1,3 @@
-
 import Tooltip from '@mui/material/Tooltip';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -8,9 +7,10 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
+
 import { Iconify } from 'src/components/iconify';
 
-type CorporateTableToolbarProps = {
+type DriverTableToolbarProps = {
   numSelected: number;
   filterName: string;
   onFilterName: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -18,13 +18,13 @@ type CorporateTableToolbarProps = {
   onFilterStatus: (value: 'all' | 'active' | 'inactive') => void;
 };
 
-export function CorporateTableToolbar({
+export function DriverTableToolbar({
   numSelected,
   filterName,
   onFilterName,
   filterStatus,
   onFilterStatus,
-}: CorporateTableToolbarProps) {
+}: DriverTableToolbarProps) {
   return (
     <Toolbar
       sx={{
@@ -44,10 +44,11 @@ export function CorporateTableToolbar({
         </Typography>
       ) : (
         <Stack direction="row" spacing={2} alignItems="center">
+          {/* Search Input */}
           <OutlinedInput
             value={filterName}
             onChange={onFilterName}
-            placeholder="Search corporate..."
+            placeholder="Search driver..."
             startAdornment={
               <InputAdornment position="start">
                 <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
@@ -56,6 +57,7 @@ export function CorporateTableToolbar({
             sx={{ maxWidth: 320 }}
           />
 
+          {/* Status Filter */}
           <Select
             value={filterStatus}
             onChange={(e) => onFilterStatus(e.target.value as 'all' | 'active' | 'inactive')}
@@ -69,6 +71,7 @@ export function CorporateTableToolbar({
         </Stack>
       )}
 
+      {/* Delete Selected */}
       {numSelected > 0 && (
         <Tooltip title="Delete Selected">
           <IconButton>

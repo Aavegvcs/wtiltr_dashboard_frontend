@@ -1,4 +1,3 @@
-
 export function emptyRows(page: number, rowsPerPage: number, arrayLength: number) {
   return page > 0 ? Math.max(0, (1 + page) * rowsPerPage - arrayLength) : 0;
 }
@@ -30,35 +29,35 @@ export const visuallyHidden = {
   clip: 'rect(0 0 0 0)',
 } as const;
 
-type ApplyFilterProps = {
+type ApplyFilterVehicleProps = {
   inputData: any[];
   comparator: (a: any, b: any) => number;
   filterName: string;
   filterStatus: 'all' | 'active' | 'inactive';
 };
 
-export function applyFilterCorporate({
+export function applyFilterVehicle({
   inputData,
   comparator,
   filterName,
   filterStatus,
-}: ApplyFilterProps) {
+}: ApplyFilterVehicleProps) {
   const stabilized = inputData.map((el, index) => [el, index] as const);
   stabilized.sort((a, b) => {
     const order = comparator(a[0], b[0]);
     if (order !== 0) return order;
     return a[1] - b[1];
   });
+
   let data = stabilized.map((el) => el[0]);
 
   if (filterName) {
     const keyword = filterName.toLowerCase();
     data = data.filter(
       (item: any) =>
-        item.corporateName?.toLowerCase().includes(keyword) ||
-        item.corporateCode?.toLowerCase().includes(keyword) ||
-        item.phoneNumber?.includes(keyword) ||
-        item.email?.toLowerCase().includes(keyword)
+        item.vehicleNumber?.toLowerCase().includes(keyword) ||
+        item.vehicleName?.toLowerCase().includes(keyword) ||
+        item.vehicleModel?.toLowerCase().includes(keyword)
     );
   }
 

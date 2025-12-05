@@ -30,9 +30,9 @@ export default function BranchTableRow({ row, selected, onSelectRow, onEdit, onD
         <Label color={row.isActive ? 'success' : 'error'}>{row.isActive ? 'Active' : 'Inactive'}</Label>
       </TableCell>
       <TableCell align="center">
-        <IconButton onClick={onEdit}><Iconify icon="solar:pen-bold" /></IconButton>
+        <IconButton color="primary" onClick={onEdit}><Iconify icon="solar:pen-bold" /></IconButton>
         {/* <IconButton onClick={onToggleStatus}><Iconify icon="mdi:toggle-switch" /></IconButton> */}
-        <IconButton onClick={onDelete} color="error"><Iconify icon="solar:trash-bin-trash-bold" /></IconButton>
+        {/* <IconButton onClick={onDelete} color="error"><Iconify icon="solar:trash-bin-trash-bold" /></IconButton> */}
       </TableCell>
     </TableRow>
   );

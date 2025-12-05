@@ -71,41 +71,42 @@ export const useNavData = (): NavItem[] => {
           icon: getChildIcon(BranchIcon),
           permission: 'branch-view',
         },
+         {
+          title: 'Vehicle',
+          path: '/vehicle-view',
+          icon: getChildIcon(BranchIcon),
+          permission: 'vehicle-view',
+        },
+         {
+          title: 'Driver',
+          path: '/driver-view',
+          icon: getChildIcon(BranchIcon),
+          permission: 'driver-view',
+        },
+        {
+          title: 'CVD Mapping',
+          path: '/cvd-mapping-view',
+          icon: getChildIcon(BranchIcon),
+          permission: 'cvd-mapping-view',
+        },
+        
 
         {
-          title: 'Employee List',
-          path: '/company-employee',
-          icon: getChildIcon(PeopleIcon),
-          permission: 'company-employee',
+          title: 'Trip Sheet',
+          path: '/trip-sheet-view',
+          icon: getChildIcon(BranchIcon),
+          permission: 'trip-sheet-view',
         },
-      ],
-    },
-    {
-      title: 'Insurance Company',
-      path: '#',
-      icon: getParentIcon(BusinessIcon),
-      children: [
         {
-          title: 'Company List',
-          path: '/insurance-company',
-          icon: getChildIcon(ListAltIcon),
-          permission: 'insurance-company',
+          title: 'Admin Sheet',
+          path: '/admin-sheet-view',
+          icon: getChildIcon(BranchIcon),
+          permission: 'admin-sheet-view',
         },
+       
       ],
     },
-    {
-      title: 'Insurance Product',
-      path: '#',
-      icon: getParentIcon(ShoppingBagIcon),
-      children: [
-        {
-          title: 'Product List',
-          path: '/insurance-product',
-          icon: getChildIcon(DescriptionIcon),
-          permission: 'insurance-product',
-        },
-      ],
-    },
+    
    
     {
       title: 'Permissions',

@@ -1,4 +1,3 @@
-
 import Tooltip from '@mui/material/Tooltip';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -8,9 +7,10 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
+
 import { Iconify } from 'src/components/iconify';
 
-type CorporateTableToolbarProps = {
+type VehicleTableToolbarProps = {
   numSelected: number;
   filterName: string;
   onFilterName: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -18,13 +18,13 @@ type CorporateTableToolbarProps = {
   onFilterStatus: (value: 'all' | 'active' | 'inactive') => void;
 };
 
-export function CorporateTableToolbar({
+export function VehicleTableToolbar({
   numSelected,
   filterName,
   onFilterName,
   filterStatus,
   onFilterStatus,
-}: CorporateTableToolbarProps) {
+}: VehicleTableToolbarProps) {
   return (
     <Toolbar
       sx={{
@@ -47,7 +47,7 @@ export function CorporateTableToolbar({
           <OutlinedInput
             value={filterName}
             onChange={onFilterName}
-            placeholder="Search corporate..."
+            placeholder="Search vehicle..."
             startAdornment={
               <InputAdornment position="start">
                 <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
