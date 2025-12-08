@@ -249,6 +249,8 @@ export function CorporateView() {
   ) => {
     const { name, value } = e.target as HTMLInputElement;
 
+    setErrors((prev) => ({ ...prev, [name]: '' }));
+
     if (name === 'country' || name === 'state') {
       const selected = value ? { id: Number(value), name: '' } : null;
       const list = name === 'country' ? countryList : stateList;
@@ -259,10 +261,73 @@ export function CorporateView() {
     }
   };
 
+  // const handleChange = (
+  //   e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
+  // ) => {
+  //   const { name, value } = e.target as HTMLInputElement;
+
+  //   if (name === 'country' || name === 'state') {
+  //     const selected = value ? { id: Number(value), name: '' } : null;
+  //     const list = name === 'country' ? countryList : stateList;
+  //     const found = list.find((item) => item.id === Number(value));
+  //     setNewCorporate((prev) => ({ ...prev, [name]: found || selected }));
+  //   } else {
+  //     setNewCorporate((prev) => ({ ...prev, [name]: value }));
+  //   }
+  // };
+
+  // const validate = () => {
+  //   const err: Record<string, string> = {};
+  //   if (!newCorporate.corporateCode.trim()) err.corporateCode = 'Required';
+  //   if (!newCorporate.corporateName.trim()) err.corporateName = 'Required';
+  //   setErrors(err);
+  //   return Object.keys(err).length === 0;
+  // };
   const validate = () => {
     const err: Record<string, string> = {};
-    if (!newCorporate.corporateCode.trim()) err.corporateCode = 'Required';
-    if (!newCorporate.corporateName.trim()) err.corporateName = 'Required';
+
+    // ✅ Corporate Code (Create only)
+    if (modalMode === 'add' && !newCorporate.corporateCode.trim()) {
+      err.corporateCode = 'Corporate Code is required';
+    }
+
+    // ✅ Corporate Name
+    if (!newCorporate.corporateName.trim()) {
+      err.corporateName = 'Corporate Name is required';
+    }
+
+    // ✅ Phone (Optional but if present must be valid)
+
+    if (!newCorporate.phoneNumber.trim()) {
+      err.phoneNumber = 'Phone number is required';
+    } else if (!/^[6-9]\d{9}$/.test(newCorporate.phoneNumber)) {
+      err.phoneNumber = 'Enter a valid 10-digit Indian mobile number';
+    }
+
+    // ✅ Email (Optional but if present must be valid)
+    if (!newCorporate.email.trim()) {
+      err.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCorporate.email)) {
+      err.email = 'Enter a valid email address';
+    }
+
+    // ✅ GST (Optional but format check)
+    if (
+      newCorporate.gst &&
+      !/^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$/.test(newCorporate.gst)
+    ) {
+      err.gst = 'Invalid GST number format';
+    }
+
+    // ✅ PAN (Optional but format check)
+    if (newCorporate.panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(newCorporate.panNumber)) {
+      err.panNumber = 'Invalid PAN number format';
+    }
+
+    // ✅ Country & State (Optional rule – enable if required)
+    // if (!newCorporate.country) err.country = 'Country is required';
+    // if (!newCorporate.state) err.state = 'State is required';
+
     setErrors(err);
     return Object.keys(err).length === 0;
   };
@@ -288,7 +353,7 @@ export function CorporateView() {
       refreshData();
       handleClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.data?.message || 'Operation failed');
       console.log(err.response);
     } finally {
       setButtonLoading(false);
@@ -401,7 +466,6 @@ export function CorporateView() {
                           selected={table.selected.includes(String(row.id))}
                           onSelectRow={() => table.onSelectRow(String(row.id))}
                           onEdit={handleOpenEdit}
-                         
                         />
                       ))}
 
@@ -459,21 +523,46 @@ export function CorporateView() {
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <TextField
+              {/* <TextField
                 fullWidth
                 label="Phone"
                 name="phoneNumber"
                 value={newCorporate.phoneNumber}
                 onChange={handleChange}
+                error={!!errors.phoneNumber}
+                helperText={errors.phoneNumber}
+              /> */}
+              <TextField
+                fullWidth
+                label="Phone *"
+                name="phoneNumber"
+                value={newCorporate.phoneNumber}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ''); // ✅ Remove non-numbers
+                  if (value.length <= 10) {
+                    setNewCorporate((prev) => ({
+                      ...prev,
+                      phoneNumber: value,
+                    }));
+                  }
+                }}
+                inputProps={{
+                  maxLength: 10, // ✅ Extra safety
+                  inputMode: 'numeric',
+                }}
+                error={!!errors.phoneNumber}
+                helperText={errors.phoneNumber}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Email"
+                label="Email *"
                 name="email"
                 value={newCorporate.email}
                 onChange={handleChange}
+                error={!!errors.email}
+                helperText={errors.email}
               />
             </Grid>
 

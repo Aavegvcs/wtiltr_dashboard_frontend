@@ -839,6 +839,52 @@ export function CvdView() {
   // ----------------------------------------------------
   // FETCH LISTS + MAPPINGS
   // ----------------------------------------------------
+  // useEffect(() => {
+  //   const fetchAll = async () => {
+  //     try {
+  //       setLoading(true);
+
+  //       const [cvdRes, corpRes, branchRes, vehicleRes, driverRes] = await Promise.all([
+  //         axiosInstance.get('/cvd-mapping/list'),
+  //         axiosInstance.post('/companies/list'),
+  //         axiosInstance.post('/branches/list'),
+  //         axiosInstance.get('/vehicle/list'),
+  //         axiosInstance.get('/driver/list'),
+  //       ]);
+
+  //       // CVD mappings
+  //       const cvdList = Array.isArray(cvdRes.data?.data?.result) ? cvdRes.data.data.result : [];
+
+  //       setCvdMappings(
+  //         cvdList.map((m: any) => ({
+  //           id: m.id,
+  //           corporate: m.corporate,
+  //           branch: m.branch,
+  //           vehicle: m.vehicle,
+  //           driver: m.driver,
+  //           isActive: m.isActive,
+  //         }))
+  //       );
+
+  //       // ✅ RESTORED WORKING LOGIC for corporate & branch
+  //       setCorporates(corpRes.data?.data?.items || []);
+  //       setBranches(branchRes.data?.data?.items || []);
+  //       console.log("corporates response:", corpRes.data)
+  //       console.log("branches response:", branchRes.data)
+
+  //       // ✅ Vehicle & Driver (NEW corrected logic)
+  //       setVehicles(vehicleRes.data?.data?.result?.data || []);
+  //       setDrivers(driverRes.data?.data?.result?.data || []);
+  //     } catch (err) {
+  //       console.error(err);
+  //       toast.error('Failed to load CVD data');
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchAll();
+  // }, [refreshTrigger]);
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -852,7 +898,7 @@ export function CvdView() {
           axiosInstance.get('/driver/list'),
         ]);
 
-        // CVD mappings
+        // ✅ CVD Mappings (keep as-is)
         const cvdList = Array.isArray(cvdRes.data?.data?.result) ? cvdRes.data.data.result : [];
 
         setCvdMappings(
@@ -866,15 +912,34 @@ export function CvdView() {
           }))
         );
 
-        // ✅ RESTORED WORKING LOGIC for corporate & branch
-        setCorporates(corpRes.data?.data?.items || []);
-        setBranches(branchRes.data?.data?.items || []);
-        console.log("corporates response:", corpRes.data)
-        console.log("branches response:", branchRes.data)
+        // ✅ ONLY ACTIVE CORPORATES
+        const activeCorporates = (corpRes.data?.data?.items || []).filter(
+          (c: any) => c.isActive === true
+        );
+        setCorporates(activeCorporates);
 
-        // ✅ Vehicle & Driver (NEW corrected logic)
-        setVehicles(vehicleRes.data?.data?.result?.data || []);
-        setDrivers(driverRes.data?.data?.result?.data || []);
+        // ✅ ONLY ACTIVE BRANCHES
+        const activeBranches = (branchRes.data?.data?.items || []).filter(
+          (b: any) => b.isActive === true
+        );
+        setBranches(activeBranches);
+
+        // ✅ ONLY ACTIVE VEHICLES
+        const activeVehicles = (vehicleRes.data?.data?.result?.data || []).filter(
+          (v: any) => v.isActive === true
+        );
+        setVehicles(activeVehicles);
+
+        // ✅ ONLY ACTIVE DRIVERS
+        const activeDrivers = (driverRes.data?.data?.result?.data || []).filter(
+          (d: any) => d.isActive === true
+        );
+        setDrivers(activeDrivers);
+
+        console.log('Active corporates:', activeCorporates);
+        console.log('Active branches:', activeBranches);
+        console.log('Active vehicles:', activeVehicles);
+        console.log('Active drivers:', activeDrivers);
       } catch (err) {
         console.error(err);
         toast.error('Failed to load CVD data');

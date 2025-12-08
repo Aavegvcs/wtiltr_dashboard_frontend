@@ -227,8 +227,13 @@ export function VehicleView() {
   const handleSubmit = async () => {
     if (!validate()) return;
 
+    // const payload = {
+    //   ...vehicleForm,
+    //   documents: vehicleForm.documents,
+    // };
     const payload = {
       ...vehicleForm,
+      isActive: Boolean(vehicleForm.isActive), // ✅ SAFETY
       documents: vehicleForm.documents,
     };
 

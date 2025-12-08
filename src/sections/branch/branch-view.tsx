@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Box,
@@ -28,7 +27,7 @@ import BranchTableToolbar from './branch-table-toolbar';
 import TableEmptyRows from './table-empty-rows';
 import TableNoData from './table-no-data';
 import BranchBulkUpload from './branch-bulk-upload';
-
+import { DashboardContent } from 'src/layouts/dashboard';
 import type { BranchItem } from './types';
 import type { HeadLabel } from './branch-table-head';
 
@@ -68,6 +67,7 @@ export default function BranchView() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editRow, setEditRow] = useState<BranchItem | null>(null);
   const [buttonLoading, setButtonLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // 🟢 pincode → null (Fix TS error)
   const [form, setForm] = useState<Partial<BranchItem>>({
@@ -166,20 +166,67 @@ export default function BranchView() {
   // ---------------------------------------
   // Open Edit Modal
   // ---------------------------------------
+  // const openEdit = (row: BranchItem) => {
+  //   setModalMode('edit');
+  //   setEditRow(row);
+
+  //   const { id, ...rest } = row;
+  //   setForm(rest);
+
+  //   setOpenModal(true);
+  // };
   const openEdit = (row: BranchItem) => {
     setModalMode('edit');
     setEditRow(row);
 
-    const { id, ...rest } = row;
-    setForm(rest);
+    setForm({
+      branchCode: row.branchCode,
+      name: row.name,
+      corporateId: row.corporateId,
+      stateId: row.stateId,
+      city: row.city,
+      pincode: row.pincode,
+      address: row.address,
+      email: row.email,
+      phone: row.phone,
+      isActive: row.isActive,
+    });
 
     setOpenModal(true);
   };
 
   const closeModal = () => setOpenModal(false);
 
+  // const handleChange = (e: any) => {
+  //   const { name, value, type, checked } = e.target;
+  //   setForm((p) => ({
+  //     ...p,
+  //     [name]: type === 'checkbox' ? checked : value,
+  //   }));
+  // };
   const handleChange = (e: any) => {
     const { name, value, type, checked } = e.target;
+
+    setErrors((prev) => ({ ...prev, [name]: '' }));
+
+    // ✅ PHONE: only digits, max 10
+    if (name === 'phone') {
+      const numeric = value.replace(/\D/g, '');
+      if (numeric.length <= 10) {
+        setForm((p) => ({ ...p, phone: numeric }));
+      }
+      return;
+    }
+
+    // ✅ PINCODE: only digits, max 6
+    if (name === 'pincode') {
+      const numeric = value.replace(/\D/g, '');
+      if (numeric.length <= 6) {
+        setForm((p) => ({ ...p, pincode: numeric ? Number(numeric) : null }));
+      }
+      return;
+    }
+
     setForm((p) => ({
       ...p,
       [name]: type === 'checkbox' ? checked : value,
@@ -190,15 +237,101 @@ export default function BranchView() {
     setForm((p) => ({ ...p, [name]: value }));
   };
 
+  const validateForm = () => {
+    const err: Record<string, string> = {};
+
+    if (!form.branchCode?.trim() && modalMode === 'add') err.branchCode = 'Branch Code is required';
+
+    if (!form.corporateId) err.corporateId = 'Corporate is required';
+
+    if (!form.name?.trim()) err.name = 'Branch name is required';
+
+    if (!form.stateId) err.stateId = 'State is required';
+
+    if (!form.city?.trim()) err.city = 'City is required';
+
+    // ✅ PINCODE
+    if (form.pincode && String(form.pincode).length !== 6)
+      err.pincode = 'Pincode must be exactly 6 digits';
+
+    // ✅ PHONE
+    if (form.phone && !/^[6-9]\d{9}$/.test(form.phone))
+      err.phone = 'Enter a valid 10-digit mobile number';
+
+    // ✅ EMAIL
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      err.email = 'Enter a valid email address';
+
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };
+
   // ---------------------------------------
   // Create Branch
   // ---------------------------------------
+  // const handleCreate = async () => {
+  //   setButtonLoading(true);
+  //   try {
+  //     const payload = {
+  //       ...form,
+  //       pincode: form.pincode ? Number(form.pincode) : null,
+  //       isActive: Boolean(form.isActive),
+  //     };
+
+  //     await createBranch(payload);
+
+  //     toast.success('Branch created');
+  //     fetchList();
+  //     closeModal();
+  //   } catch (e) {
+  //     toast.error('Failed to create branch');
+  //   } finally {
+  //     setButtonLoading(false);
+  //   }
+  // };
+
+  // const handleCreate = async () => {
+  //   setButtonLoading(true);
+  //   try {
+  //     const payload = {
+  //       branchCode: form.branchCode,
+  //       name: form.name,
+  //       corporateId: form.corporateId,
+  //       stateId: form.stateId,
+  //       city: form.city,
+  //       pincode: form.pincode ? Number(form.pincode) : null,
+  //       address: form.address,
+  //       email: form.email,
+  //       phone: form.phone,
+  //       isActive: Boolean(form.isActive),
+  //     };
+
+  //     await createBranch(payload);
+
+  //     toast.success('Branch created');
+  //     fetchList();
+  //     closeModal();
+  //   } catch (e) {
+  //     toast.error('Failed to create branch');
+  //   } finally {
+  //     setButtonLoading(false);
+  //   }
+  // };
   const handleCreate = async () => {
+    if (!validateForm()) return;
+
     setButtonLoading(true);
     try {
       const payload = {
-        ...form,
+        branchCode: form.branchCode,
+        name: form.name,
+        corporateId: form.corporateId,
+        stateId: form.stateId,
+        city: form.city,
         pincode: form.pincode ? Number(form.pincode) : null,
+        address: form.address,
+        email: form.email,
+        phone: form.phone,
         isActive: Boolean(form.isActive),
       };
 
@@ -207,7 +340,7 @@ export default function BranchView() {
       toast.success('Branch created');
       fetchList();
       closeModal();
-    } catch (e) {
+    } catch {
       toast.error('Failed to create branch');
     } finally {
       setButtonLoading(false);
@@ -217,14 +350,72 @@ export default function BranchView() {
   // ---------------------------------------
   // Update Branch
   // ---------------------------------------
-  const handleUpdate = async () => {
-    if (!editRow) return;
-    setButtonLoading(true);
+  // const handleUpdate = async () => {
+  //   if (!editRow) return;
+  //   setButtonLoading(true);
 
+  //   try {
+  //     const payload = {
+  //       ...form,
+  //       pincode: form.pincode ? Number(form.pincode) : null,
+  //       isActive: Boolean(form.isActive),
+  //     };
+
+  //     await updateBranch(String(editRow.id), payload);
+
+  //     toast.success('Branch updated');
+  //     fetchList();
+  //     closeModal();
+  //   } catch (e) {
+  //     toast.error('Failed to update');
+  //   } finally {
+  //     setButtonLoading(false);
+  //   }
+  // };
+  // const handleUpdate = async () => {
+  //   if (!editRow) return;
+  //   setButtonLoading(true);
+
+  //   try {
+  //     const payload = {
+  //       branchCode: form.branchCode,
+  //       name: form.name,
+  //       corporateId: form.corporateId,
+  //       stateId: form.stateId,
+  //       city: form.city,
+  //       pincode: form.pincode ? Number(form.pincode) : null,
+  //       address: form.address,
+  //       email: form.email,
+  //       phone: form.phone,
+  //       isActive: Boolean(form.isActive),
+  //     };
+
+  //     await updateBranch(String(editRow.id), payload);
+
+  //     toast.success('Branch updated');
+  //     fetchList();
+  //     closeModal();
+  //   } catch (e) {
+  //     toast.error('Failed to update');
+  //   } finally {
+  //     setButtonLoading(false);
+  //   }
+  // };
+  const handleUpdate = async () => {
+    if (!editRow || !validateForm()) return;
+
+    setButtonLoading(true);
     try {
       const payload = {
-        ...form,
+        branchCode: form.branchCode,
+        name: form.name,
+        corporateId: form.corporateId,
+        stateId: form.stateId,
+        city: form.city,
         pincode: form.pincode ? Number(form.pincode) : null,
+        address: form.address,
+        email: form.email,
+        phone: form.phone,
         isActive: Boolean(form.isActive),
       };
 
@@ -233,7 +424,7 @@ export default function BranchView() {
       toast.success('Branch updated');
       fetchList();
       closeModal();
-    } catch (e) {
+    } catch {
       toast.error('Failed to update');
     } finally {
       setButtonLoading(false);
@@ -292,267 +483,291 @@ export default function BranchView() {
   // Render Component
   // ---------------------------------------
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Branches</Typography>
+    <DashboardContent>
+      <Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4">Branches</Typography>
 
-        <Box display="flex" gap={2}>
-          <Button variant="contained" onClick={() => setOpenBulk(true)}>
-            Bulk Upload
-          </Button>
-          <Button variant="contained" onClick={openAdd}>
-            Add Branch
-          </Button>
+          <Box display="flex" gap={2}>
+            <Button variant="contained" onClick={() => setOpenBulk(true)}>
+              Bulk Upload
+            </Button>
+            <Button variant="contained" onClick={openAdd}>
+              Add Branch
+            </Button>
+          </Box>
         </Box>
-      </Box>
 
-      {/* TABLE */}
-      <Card>
-        <BranchTableToolbar
-          numSelected={table.selected.length}
-          filterName={filterName}
-          onFilterName={(e) => {
-            setFilterName(e.target.value);
-            table.onResetPage();
-          }}
-        />
+        {/* TABLE */}
+        <Card>
+          <BranchTableToolbar
+            numSelected={table.selected.length}
+            filterName={filterName}
+            onFilterName={(e) => {
+              setFilterName(e.target.value);
+              table.onResetPage();
+            }}
+          />
 
-        <Scrollbar>
-          <TableContainer>
-            <Table sx={{ minWidth: 900 }}>
-              <BranchTableHead
-                order={table.order}
-                orderBy={table.orderBy}
-                rowCount={filtered.length}
-                numSelected={table.selected.length}
-                onSort={table.onSort}
-                onSelectAllRows={(checked) =>
-                  table.onSelectAllRows(
-                    checked,
-                    filtered.map((r) => String(r.id))
-                  )
-                }
-                headLabel={columns}
-              />
-
-              <TableBody>
-                {loading ? (
-                  <TableRowPlaceholder colSpan={8} />
-                ) : (
-                  paginated.map((row) => (
-                    <BranchTableRow
-                      key={row.id}
-                      row={row}
-                      selected={table.selected.includes(String(row.id))}
-                      onSelectRow={() => table.onSelectRow(String(row.id))}
-                      onEdit={() => openEdit(row)}
-                      onDelete={() => handleDelete(row)}
-                      onToggleStatus={() => handleToggleStatus(row)}
-                    />
-                  ))
-                )}
-
-                <TableEmptyRows
-                  emptyRows={Math.max(0, (1 + table.page) * table.rowsPerPage - filtered.length)}
+          <Scrollbar>
+            <TableContainer>
+              <Table sx={{ minWidth: 900 }}>
+                <BranchTableHead
+                  order={table.order}
+                  orderBy={table.orderBy}
+                  rowCount={filtered.length}
+                  numSelected={table.selected.length}
+                  onSort={table.onSort}
+                  onSelectAllRows={(checked) =>
+                    table.onSelectAllRows(
+                      checked,
+                      filtered.map((r) => String(r.id))
+                    )
+                  }
+                  headLabel={columns}
                 />
 
-                {!loading && filtered.length === 0 && <TableNoData searchQuery={filterName} />}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Scrollbar>
+                <TableBody>
+                  {loading ? (
+                    <TableRowPlaceholder colSpan={8} />
+                  ) : (
+                    paginated.map((row) => (
+                      <BranchTableRow
+                        key={row.id}
+                        row={row}
+                        selected={table.selected.includes(String(row.id))}
+                        onSelectRow={() => table.onSelectRow(String(row.id))}
+                        onEdit={() => openEdit(row)}
+                        onDelete={() => handleDelete(row)}
+                        onToggleStatus={() => handleToggleStatus(row)}
+                      />
+                    ))
+                  )}
 
-        <TablePagination
-          component="div"
-          page={table.page}
-          count={filtered.length}
-          rowsPerPage={table.rowsPerPage}
-          onPageChange={table.onChangePage}
-          rowsPerPageOptions={[5, 10, 25]}
-          onRowsPerPageChange={table.onChangeRowsPerPage}
-        />
-      </Card>
+                  <TableEmptyRows
+                    emptyRows={Math.max(0, (1 + table.page) * table.rowsPerPage - filtered.length)}
+                  />
 
-      {/* MODAL */}
-      <Modal open={openModal} onClose={closeModal}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '85%',
-            maxWidth: 900,
-            bgcolor: 'white',
-            p: 3,
-            borderRadius: 2,
-            maxHeight: '90vh',
-            overflowY: 'auto',
+                  {!loading && filtered.length === 0 && <TableNoData searchQuery={filterName} />}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Scrollbar>
+
+          <TablePagination
+            component="div"
+            page={table.page}
+            count={filtered.length}
+            rowsPerPage={table.rowsPerPage}
+            onPageChange={table.onChangePage}
+            rowsPerPageOptions={[5, 10, 25]}
+            onRowsPerPageChange={table.onChangeRowsPerPage}
+          />
+        </Card>
+
+        {/* MODAL */}
+        <Modal open={openModal} onClose={closeModal}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '85%',
+              maxWidth: 900,
+              bgcolor: 'white',
+              p: 3,
+              borderRadius: 2,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <Typography variant="h6" mb={2}>
+              {modalMode === 'add' ? 'Create Branch' : 'Edit Branch'}
+            </Typography>
+
+            <Grid container spacing={2}>
+              {/* Branch Code */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Branch Code"
+                  name="branchCode"
+                  value={form.branchCode ?? ''}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                  disabled={modalMode === 'edit'}
+                  error={!!errors.branchCode}
+                  helperText={errors.branchCode}
+                />
+              </Grid>
+
+              {/* Corporate */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    displayEmpty
+                    value={form.corporateId ?? ''}
+                    onChange={(e) => handleSelect('corporateId', e.target.value)}
+                  >
+                    <MenuItem value="">Select Corporate</MenuItem>
+                    {corporates.map((c) => (
+                      <MenuItem key={c.id} value={c.id}>
+                        {c.corporateName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.corporateId && (
+                    <Typography color="error" fontSize={12}>
+                      {errors.corporateId}
+                    </Typography>
+                  )}
+                </FormControl>
+              </Grid>
+
+              {/* Name */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Name"
+                  name="name"
+                  value={form.name ?? ''}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                  error={!!errors.name}
+                  helperText={errors.name}
+                />
+              </Grid>
+
+              {/* State Dropdown */}
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    displayEmpty
+                    value={form.stateId ?? ''}
+                    onChange={(e) => handleSelect('stateId', e.target.value)}
+                  >
+                    <MenuItem value="">Select State</MenuItem>
+                    {states.map((s) => (
+                      <MenuItem key={s.id} value={s.id}>
+                        {s.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.stateId && (
+                    <Typography color="error" fontSize={12}>
+                      {errors.stateId}
+                    </Typography>
+                  )}
+                </FormControl>
+              </Grid>
+
+              {/* City */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="City"
+                  name="city"
+                  value={form.city ?? ''}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                  error={!!errors.city}
+                  helperText={errors.city}
+                />
+              </Grid>
+
+              {/* Pincode */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Pincode"
+                  name="pincode"
+                  value={form.pincode ?? ''}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                  error={!!errors.pincode}
+                  helperText={errors.pincode}
+                />
+              </Grid>
+
+              {/* Address */}
+              <Grid item xs={12}>
+                <TextField
+                  label="Address"
+                  name="address"
+                  value={form.address ?? ''}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                />
+              </Grid>
+
+              {/* Email */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Email"
+                  name="email"
+                  value={form.email ?? ''}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                  error={!!errors.email}
+                  helperText={errors.email}
+                />
+              </Grid>
+
+              {/* Phone */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Phone"
+                  name="phone"
+                  value={form.phone ?? ''}
+                  onChange={handleChange}
+                  fullWidth
+                  size="small"
+                  error={!!errors.phone}
+                  helperText={errors.phone}
+                />
+              </Grid>
+
+              {/* Status */}
+              <Grid item xs={12} sm={6} display="flex" alignItems="center">
+                <Typography sx={{ mr: 2 }}>Active</Typography>
+                <Switch
+                  checked={Boolean(form.isActive)}
+                  onChange={(e) => handleSelect('isActive', e.target.checked)}
+                />
+              </Grid>
+
+              {/* Buttons */}
+              <Grid item xs={12} display="flex" justifyContent="flex-end" gap={2}>
+                <Button variant="outlined" onClick={closeModal}>
+                  Cancel
+                </Button>
+                <Button variant="contained" onClick={submitModal} disabled={buttonLoading}>
+                  {buttonLoading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : modalMode === 'add' ? (
+                    'Save'
+                  ) : (
+                    'Update'
+                  )}
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </Modal>
+
+        <BranchBulkUpload
+          open={openBulk}
+          onClose={() => setOpenBulk(false)}
+          refresh={() => {
+            setOpenBulk(false);
+            fetchList();
           }}
-        >
-          <Typography variant="h6" mb={2}>
-            {modalMode === 'add' ? 'Create Branch' : 'Edit Branch'}
-          </Typography>
-
-          <Grid container spacing={2}>
-            {/* Branch Code */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Branch Code"
-                name="branchCode"
-                value={form.branchCode ?? ''}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-                disabled={modalMode === 'edit'}
-              />
-            </Grid>
-
-            {/* Corporate */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <Select
-                  displayEmpty
-                  value={form.corporateId ?? ''}
-                  onChange={(e) => handleSelect('corporateId', e.target.value)}
-                >
-                  <MenuItem value="">Select Corporate</MenuItem>
-                  {corporates.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.corporateName}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Name */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Name"
-                name="name"
-                value={form.name ?? ''}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            {/* State Dropdown */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <Select
-                  displayEmpty
-                  value={form.stateId ?? ''}
-                  onChange={(e) => handleSelect('stateId', e.target.value)}
-                >
-                  <MenuItem value="">Select State</MenuItem>
-                  {states.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>
-                      {s.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* City */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="City"
-                name="city"
-                value={form.city ?? ''}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            {/* Pincode */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Pincode"
-                name="pincode"
-                value={form.pincode ?? ''}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            {/* Address */}
-            <Grid item xs={12}>
-              <TextField
-                label="Address"
-                name="address"
-                value={form.address ?? ''}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            {/* Email */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Email"
-                name="email"
-                value={form.email ?? ''}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            {/* Phone */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Phone"
-                name="phone"
-                value={form.phone ?? ''}
-                onChange={handleChange}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            {/* Status */}
-            <Grid item xs={12} sm={6} display="flex" alignItems="center">
-              <Typography sx={{ mr: 2 }}>Active</Typography>
-              <Switch
-                checked={Boolean(form.isActive)}
-                onChange={(e) => handleSelect('isActive', e.target.checked)}
-              />
-            </Grid>
-
-            {/* Buttons */}
-            <Grid item xs={12} display="flex" justifyContent="flex-end" gap={2}>
-              <Button variant="outlined" onClick={closeModal}>
-                Cancel
-              </Button>
-              <Button variant="contained" onClick={submitModal} disabled={buttonLoading}>
-                {buttonLoading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : modalMode === 'add' ? (
-                  'Save'
-                ) : (
-                  'Update'
-                )}
-              </Button>
-            </Grid>
-          </Grid>
-        </Box>
-      </Modal>
-
-      <BranchBulkUpload
-        open={openBulk}
-        onClose={() => setOpenBulk(false)}
-        refresh={() => {
-          setOpenBulk(false);
-          fetchList();
-        }}
-      />
-    </Box>
+        />
+      </Box>
+    </DashboardContent>
   );
 }
 
@@ -593,7 +808,7 @@ function useLocalTable() {
     onChangePage: (_e: React.MouseEvent<HTMLButtonElement> | null, newPage: number) =>
       setPage(newPage),
 
-   onChangeRowsPerPage: (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChangeRowsPerPage: (e: React.ChangeEvent<HTMLInputElement>) => {
       setRowsPerPage(Number(e.target.value));
       setPage(0);
     },
