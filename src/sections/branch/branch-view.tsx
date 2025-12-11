@@ -30,6 +30,8 @@ import BranchBulkUpload from './branch-bulk-upload';
 import { DashboardContent } from 'src/layouts/dashboard';
 import type { BranchItem } from './types';
 import type { HeadLabel } from './branch-table-head';
+import { Toaster } from 'react-hot-toast';
+import { IconButton } from '@mui/material';
 
 import {
   listBranches,
@@ -40,6 +42,7 @@ import {
   getCorporatesForDropdown,
   getStatesForDropdown,
 } from './branch-service';
+import { Iconify } from 'src/components/iconify/iconify';
 
 // ---------------------------------------
 // Typed Columns (Fix error)
@@ -85,6 +88,8 @@ export default function BranchView() {
 
   const [corporates, setCorporates] = useState<any[]>([]);
   const [states, setStates] = useState<any[]>([]);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // ---------------------------------------
   // Fetch Branch List
@@ -140,7 +145,9 @@ export default function BranchView() {
   useEffect(() => {
     fetchList();
     fetchDropdowns();
-  }, [fetchList, fetchDropdowns]);
+  }, [fetchList, fetchDropdowns, refreshTrigger]);
+
+  const refreshData = () => setRefreshTrigger((v) => v + 1);
 
   // ---------------------------------------
   // Open Add Modal
@@ -464,14 +471,30 @@ export default function BranchView() {
   // ---------------------------------------
   // Filter + Pagination
   // ---------------------------------------
+  // const filtered = rows.filter((r) => {
+  //   const q = filterName.toLowerCase();
+  //   return (
+  //     r.name?.toLowerCase().includes(q) ||
+  //     r.branchCode?.toLowerCase().includes(q) ||
+  //     String(r.id).includes(q) ||
+  //     r.corporateName?.toLowerCase().includes(q)
+  //   );
+  // });
   const filtered = rows.filter((r) => {
     const q = filterName.toLowerCase();
-    return (
+
+    const matchesSearch =
       r.name?.toLowerCase().includes(q) ||
       r.branchCode?.toLowerCase().includes(q) ||
       String(r.id).includes(q) ||
-      r.corporateName?.toLowerCase().includes(q)
-    );
+      r.corporateName?.toLowerCase().includes(q);
+
+    const matchesStatus =
+      filterStatus === 'all' ||
+      (filterStatus === 'active' && r.isActive) ||
+      (filterStatus === 'inactive' && !r.isActive);
+
+    return matchesSearch && matchesStatus;
   });
 
   const paginated = filtered.slice(
@@ -484,15 +507,27 @@ export default function BranchView() {
   // ---------------------------------------
   return (
     <DashboardContent>
+      <Toaster position="top-right" />
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4">Branches</Typography>
 
           <Box display="flex" gap={2}>
-            <Button variant="contained" onClick={() => setOpenBulk(true)}>
+            <IconButton onClick={refreshData} color="primary">
+              <Iconify icon="eva:refresh-fill" />
+            </IconButton>
+            <Button
+              variant="outlined"
+              startIcon={<Iconify icon="ic:round-upload-file" />}
+              onClick={() => setOpenBulk(true)}
+            >
               Bulk Upload
             </Button>
-            <Button variant="contained" onClick={openAdd}>
+            <Button
+              variant="contained"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+              onClick={openAdd}
+            >
               Add Branch
             </Button>
           </Box>
@@ -500,11 +535,24 @@ export default function BranchView() {
 
         {/* TABLE */}
         <Card>
+          {/* <BranchTableToolbar
+            numSelected={table.selected.length}
+            filterName={filterName}
+            onFilterName={(e) => {
+              setFilterName(e.target.value);
+              table.onResetPage();
+            }} */}
+          {/* /> */}
           <BranchTableToolbar
             numSelected={table.selected.length}
             filterName={filterName}
             onFilterName={(e) => {
               setFilterName(e.target.value);
+              table.onResetPage();
+            }}
+            filterStatus={filterStatus}
+            onFilterStatus={(value) => {
+              setFilterStatus(value);
               table.onResetPage();
             }}
           />

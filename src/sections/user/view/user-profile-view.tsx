@@ -631,14 +631,14 @@ export default function UserProfileView() {
 
           <Grid item xs={6}>
             <Typography sx={{ fontSize: '0.95rem' }}>
-              <span style={{ fontWeight: 500 }}>Company: </span>
-              {users.companyName}
+              <span style={{ fontWeight: 500 }}>Corporate: </span>
+              {users.corporateName}
             </Typography>
 
-            <Typography sx={{ fontSize: '0.95rem' }}>
+            {/* <Typography sx={{ fontSize: '0.95rem' }}>
               <span style={{ fontWeight: 500 }}>Department: </span>
               {users.departmentName}
-            </Typography>
+            </Typography> */}
 
             <Typography sx={{ fontSize: '0.95rem' }}>
               <span style={{ fontWeight: 500 }}>Role: </span>

@@ -57,6 +57,7 @@ const modalStyle = {
 
 // Table columns with correct align type
 const columns = [
+  { id: 'id', label: 'ID', align: 'center' as const },
   { id: 'corporateCode', label: 'Corporate Code', align: 'center' as const },
   { id: 'corporateName', label: 'Corporate Name', align: 'center' as const },
   { id: 'phoneNumber', label: 'Phone', align: 'center' as const },
@@ -261,28 +262,6 @@ export function CorporateView() {
     }
   };
 
-  // const handleChange = (
-  //   e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent
-  // ) => {
-  //   const { name, value } = e.target as HTMLInputElement;
-
-  //   if (name === 'country' || name === 'state') {
-  //     const selected = value ? { id: Number(value), name: '' } : null;
-  //     const list = name === 'country' ? countryList : stateList;
-  //     const found = list.find((item) => item.id === Number(value));
-  //     setNewCorporate((prev) => ({ ...prev, [name]: found || selected }));
-  //   } else {
-  //     setNewCorporate((prev) => ({ ...prev, [name]: value }));
-  //   }
-  // };
-
-  // const validate = () => {
-  //   const err: Record<string, string> = {};
-  //   if (!newCorporate.corporateCode.trim()) err.corporateCode = 'Required';
-  //   if (!newCorporate.corporateName.trim()) err.corporateName = 'Required';
-  //   setErrors(err);
-  //   return Object.keys(err).length === 0;
-  // };
   const validate = () => {
     const err: Record<string, string> = {};
 

@@ -14,7 +14,6 @@ import {
   Paper,
   Stack,
   TableHead,
-  TableContainer,
 } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
@@ -26,39 +25,48 @@ const CorporateBulkUploadModal = ({ open, onClose, refreshData }: any) => {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [failedRecords, setFailedRecords] = useState<
-    { index: number; name: string; reason: string }[]
-  >([]);
+  const [failedRecords, setFailedRecords] = useState<any[]>([]);
 
-  // ------------------- DOWNLOAD SAMPLE CSV --------------------
+  // ✅ SIMPLE EXCEL TEMPLATE (NO DROPDOWNS)
   const handleDownloadSample = () => {
-    const headers = [
+    const header = [
       'Corporate Code',
       'Corporate Name',
       'Phone Number',
+      'Admin Name',
       'Email',
-      'State',
-      'Country',
+      'State',     // ✅ USER TYPES MANUALLY
+      'Country',   // ✅ USER TYPES MANUALLY
+      'Address',
       'IsActive',
     ];
 
-    const sampleRows = [
-      ['CORP001', 'Corporate Test', '9876543210', 'demo@gmail.com', 'Delhi', 'India', 'true'],
+    const sample = [
+      [
+        'CORP001',
+        'Sample Corporate',
+        '9876543210',
+        'Admin Name',
+        'admin@test.com',
+        'Haryana',
+        'India',
+        'Dwarka Sector 10',
+        'true',
+      ],
     ];
 
-    const csvContent = [headers.join(','), ...sampleRows.map((r) => r.join(','))].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'corporate_sample_template.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const ws = XLSX.utils.aoa_to_sheet([header, ...sample]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Corporates');
+    XLSX.writeFile(wb, 'corporate_bulk_template.xlsx');
   };
 
-  // ------------------- DOWNLOAD FAILED RECORDS --------------------
+  // ✅ FILE SELECT
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.length) setFile(e.target.files[0]);
+  };
+
+  // ✅ DOWNLOAD FAILED RECORDS CSV
   const handleDownloadFailed = () => {
     if (!failedRecords.length) return;
 
@@ -67,7 +75,9 @@ const CorporateBulkUploadModal = ({ open, onClose, refreshData }: any) => {
       ...failedRecords.map((rec) => [rec.index, rec.name, rec.reason].join(',')),
     ];
 
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvRows.join('\n')], {
+      type: 'text/csv;charset=utf-8;',
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -75,11 +85,7 @@ const CorporateBulkUploadModal = ({ open, onClose, refreshData }: any) => {
     link.click();
   };
 
-  // ------------------- FILE UPLOAD --------------------
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) setFile(e.target.files[0]);
-  };
-
+  // ✅✅✅ UPLOAD FILE → SEND DIRECT ARRAY TO BACKEND
   const handleUpload = async () => {
     if (!file) {
       toast.error('Please select a file');
@@ -88,40 +94,35 @@ const CorporateBulkUploadModal = ({ open, onClose, refreshData }: any) => {
 
     setLoading(true);
     setProgress(0);
+    setFailedRecords([]);
 
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: null }) as any[];
 
-    const batchSize = 50;
-    const failed: any[] = [];
-
-    for (let i = 0; i < jsonData.length; i += batchSize) {
-      const batch = jsonData.slice(i, i + batchSize);
-
-      try {
-        await axiosInstance.post('companies/bulkUpload', {
-          data: batch,
-          startIndex: i + 1,
-        });
-      } catch {
-        failed.push({ index: i + 1, name: batch[0]?.CorporateName, reason: 'Server Error' });
+      if (!jsonData.length) {
+        toast.error('No data found in file');
+        setLoading(false);
+        return;
       }
 
-      setProgress(Math.round(((i + batchSize) / jsonData.length) * 100));
-    }
+      console.log('✅ CORPORATE BULK PAYLOAD ===>', jsonData);
 
-    setFailedRecords(failed);
-    setLoading(false);
+      const res = await axiosInstance.post('companies/bulkUpload', jsonData);
 
-    if (failed.length === 0) {
-      toast.success('Bulk upload successful!');
+      setFailedRecords(res?.data?.failedRecords || []);
+
+      toast.success(`✅ Uploaded: ${res?.data?.successCount || 0}`);
       refreshData();
       onClose();
-    } else {
-      toast.error('Some records failed. Download the error report.');
+    } catch (err) {
+      console.error(err);
+      toast.error('Bulk upload failed');
     }
+
+    setLoading(false);
   };
 
   return (
@@ -142,17 +143,17 @@ const CorporateBulkUploadModal = ({ open, onClose, refreshData }: any) => {
           flexDirection: 'column',
         }}
       >
-        {/* Close Button */}
+        {/* ❌ CLOSE */}
         <IconButton onClick={onClose} sx={{ position: 'absolute', top: 10, right: 10 }}>
           <CloseIcon />
         </IconButton>
 
-        {/* Heading */}
+        {/* ✅ TITLE */}
         <Typography variant="h6" textAlign="center" fontWeight="bold" mb={2}>
           Corporate Bulk Upload
         </Typography>
 
-        {/* File Upload Box */}
+        {/* ✅ FILE UPLOAD BOX */}
         <Paper
           variant="outlined"
           sx={{
@@ -160,66 +161,80 @@ const CorporateBulkUploadModal = ({ open, onClose, refreshData }: any) => {
             borderStyle: 'dashed',
             textAlign: 'center',
             cursor: 'pointer',
-            '&:hover': { bgcolor: '#f9f9f9' },
           }}
           onClick={() => document.getElementById('fileInput')?.click()}
         >
           <UploadFileIcon sx={{ fontSize: 35, color: '#1976d2' }} />
           <Typography mt={1}>
-            {file ? file.name : 'Click or drag CSV/XLSX file to upload'}
+            {file ? file.name : 'Click or upload Excel file'}
           </Typography>
-          <input id="fileInput" type="file" accept=".csv,.xlsx,.xls" hidden onChange={handleFileChange} />
+          <input
+            hidden
+            id="fileInput"
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileChange}
+          />
         </Paper>
 
-        {/* Buttons */}
+        {/* ✅ BUTTONS */}
         <Stack direction="row" spacing={2} mt={2}>
           <Button variant="outlined" fullWidth onClick={handleDownloadSample}>
-            Download Sample
+            Download Excel Template
           </Button>
-          <Button variant="contained" fullWidth disabled={!file || loading} onClick={handleUpload}>
-            {loading ? 'Uploading...' : 'Upload'}
+          <Button variant="contained" fullWidth onClick={handleUpload} disabled={loading}>
+            Upload
           </Button>
         </Stack>
 
-        {/* Progress Bar */}
+        {/* ✅ PROGRESS */}
         {loading && (
           <>
-            <LinearProgress variant="determinate" value={progress} sx={{ mt: 2 }} />
-            <Typography textAlign="center">{progress}% completed</Typography>
+            <LinearProgress sx={{ mt: 2 }} />
+            <Typography textAlign="center">Uploading...</Typography>
           </>
         )}
 
-        {/* Failed Records Table */}
+        {/* ✅ FAILED RECORDS */}
         {failedRecords.length > 0 && (
           <Box mt={3} flex={1}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-              <Typography fontWeight="bold">Failed Records</Typography>
-              <Button variant="contained" size="small" onClick={handleDownloadFailed}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={1}
+            >
+              <Typography fontWeight="bold" color="error">
+                Failed Records
+              </Typography>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleDownloadFailed}
+              >
                 Download CSV
               </Button>
             </Stack>
 
             <Scrollbar sx={{ maxHeight: 180 }}>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Index</TableCell>
-                      <TableCell>Corporate Name</TableCell>
-                      <TableCell>Reason</TableCell>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Index</TableCell>
+                    <TableCell>Corporate Name</TableCell>
+                    <TableCell>Reason</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {failedRecords.map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{row.index}</TableCell>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell>{row.reason}</TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {failedRecords.map((row, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{row.index}</TableCell>
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell>{row.reason}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  ))}
+                </TableBody>
+              </Table>
             </Scrollbar>
           </Box>
         )}
