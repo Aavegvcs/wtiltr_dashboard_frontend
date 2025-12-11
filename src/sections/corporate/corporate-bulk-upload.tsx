@@ -22,107 +22,135 @@ import toast from 'react-hot-toast';
 import { Scrollbar } from 'src/components/scrollbar';
 
 const CorporateBulkUploadModal = ({ open, onClose, refreshData }: any) => {
-  const [file, setFile] = useState<File | null>(null);
+const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [failedRecords, setFailedRecords] = useState<any[]>([]);
+  const [failedRecords, setFailedRecords] = useState<
+    { index: number; name: string; reason: string }[]
+  >([]);
 
-  // ✅ SIMPLE EXCEL TEMPLATE (NO DROPDOWNS)
-  const handleDownloadSample = () => {
-    const header = [
-      'Corporate Code',
-      'Corporate Name',
-      'Phone Number',
-      'Admin Name',
-      'Email',
-      'State',     // ✅ USER TYPES MANUALLY
-      'Country',   // ✅ USER TYPES MANUALLY
-      'Address',
-      'IsActive',
-    ];
-
-    const sample = [
-      [
-        'CORP001',
-        'Sample Corporate',
-        '9876543210',
-        'Admin Name',
-        'admin@test.com',
-        'Haryana',
-        'India',
-        'Dwarka Sector 10',
-        'true',
-      ],
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet([header, ...sample]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Corporates');
-    XLSX.writeFile(wb, 'corporate_bulk_template.xlsx');
-  };
-
-  // ✅ FILE SELECT
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) setFile(e.target.files[0]);
   };
 
-  // ✅ DOWNLOAD FAILED RECORDS CSV
-  const handleDownloadFailed = () => {
-    if (!failedRecords.length) return;
+const handleDownloadSample = () => {
+  const headers = [
+    'corporateName',
+    'phoneNumber',
+    'adminName',
+    'email',
+    'state',
+    'country',
+    'address'
+  ];
 
-    const csvRows = [
-      ['Index', 'Corporate Name', 'Reason'].join(','),
-      ...failedRecords.map((rec) => [rec.index, rec.name, rec.reason].join(',')),
-    ];
+  const sampleRow = [
+    'Sample Corporate',
+    '9876543210',
+    'Admin Name',
+    'admin@test.com',
+    'Haryana',
+    'India',
+    'Dwarka Sector 10'
+  ];
 
-    const blob = new Blob([csvRows.join('\n')], {
-      type: 'text/csv;charset=utf-8;',
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'failed_corporate_records.csv');
-    link.click();
-  };
+  const wsData = [headers, sampleRow];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  // ✅✅✅ UPLOAD FILE → SEND DIRECT ARRAY TO BACKEND
+  ws['!cols'] = headers.map(() => ({ wch: 20 }));
+
+  XLSX.utils.book_append_sheet(wb, ws, 'sample_corporate_template');
+
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sample_corporate_template.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+const handleDownloadFailed = () => {
+  if (!failedRecords || failedRecords.length === 0) return;
+
+  const headers = ['Index', 'Company Name', 'Reason'];
+  const rows = failedRecords.map((rec) => [rec.index, rec.name, rec.reason]);
+  const wsData = [headers, ...rows];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  ws['!cols'] = [{ wch: 10 }, { wch: 30 }, { wch: 60 }];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'FailedRecords');
+
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'failed_corporate_records.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+
   const handleUpload = async () => {
-    if (!file) {
-      toast.error('Please select a file');
-      return;
-    }
-
+    if (!file) return;
     setLoading(true);
     setProgress(0);
     setFailedRecords([]);
+    let resstatus = null;
+    let resmsz = null;
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
+    const batchSize = 50;
+    let failed: { index: number; name: string; reason: string }[] = [];
 
-    try {
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: null }) as any[];
+    for (let i = 0; i < jsonData.length; i += batchSize) {
+      const batch = jsonData.slice(i, i + batchSize);
+      console.log('batch is here', batch);
 
-      if (!jsonData.length) {
-        toast.error('No data found in file');
-        setLoading(false);
-        return;
+      try {
+        const response = await axiosInstance.post('corporate/bulkUpload', {
+          data: batch,
+          startIndex: i + 1,
+        });
+        const res = response.data.data;
+        resstatus = res.status;
+        resmsz = res.message;
+        const result = res.result;
+        if (result.failed && result.failed.length > 0) {
+          failed = [...failed, ...result.failed];
+        }
+        console.log('failed data is1', failed);
+      } catch (err) {
+        failed.push({ index: i + 1, name: failed[i].name, reason: 'Server error' });
       }
+      setProgress(Math.round(((i + batchSize) / jsonData.length) * 100));
+    }
+    console.log('failed data is2', failed);
 
-      console.log('✅ CORPORATE BULK PAYLOAD ===>', jsonData);
+    setFailedRecords(failed);
+    setLoading(false);
 
-      const res = await axiosInstance.post('companies/bulkUpload', jsonData);
-
-      setFailedRecords(res?.data?.failedRecords || []);
-
-      toast.success(`✅ Uploaded: ${res?.data?.successCount || 0}`);
+    if (failed.length === 0) {
+      toast.success('Bulk upload completed successfully!');
       refreshData();
       onClose();
-    } catch (err) {
-      console.error(err);
-      toast.error('Bulk upload failed');
+    } else if (resstatus) {
+      toast.success(resmsz);
+    } else {
+      toast.error(resmsz);
     }
-
-    setLoading(false);
   };
 
   return (
