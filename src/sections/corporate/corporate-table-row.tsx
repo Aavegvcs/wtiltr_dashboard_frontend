@@ -126,12 +126,7 @@ type CorporateTableRowProps = {
   onEdit: (row: CorporateProps) => void;
 };
 
-export function CorporateTableRow({
-  row,
-  selected,
-  onSelectRow,
-  onEdit,
-}: CorporateTableRowProps) {
+export function CorporateTableRow({ row, selected, onSelectRow, onEdit }: CorporateTableRowProps) {
   const handleEditClick = useCallback(() => {
     onEdit?.(row);
   }, [onEdit, row]);
@@ -142,7 +137,7 @@ export function CorporateTableRow({
         <TableCell padding="checkbox">
           <Checkbox disableRipple checked={selected} onChange={onSelectRow} />
         </TableCell>
-
+        <TableCell align="center">{row.id || '-'}</TableCell>
         <TableCell align="center">{row.corporateCode || '-'}</TableCell>
         <TableCell align="center">{row.corporateName || '-'}</TableCell>
         <TableCell align="center">{row.phoneNumber || '-'}</TableCell>

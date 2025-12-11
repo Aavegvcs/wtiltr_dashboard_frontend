@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 
 import { CONFIG } from 'src/config-global';
-import { AgemtAnalyticsView } from 'src/sections/overview/view/agent-analytics-view';
+import { AgentAnalyticsView } from 'src/sections/overview/view/agent-analytics-view';
 
 // ----------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ export default function Page() {
         <meta name="keywords" content="react,material,kit,application,dashboard,admin,template" />
       </Helmet>
 
-      <AgemtAnalyticsView />
+      <AgentAnalyticsView />
     </>
   );
 }
