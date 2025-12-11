@@ -156,7 +156,7 @@ export function CorporateView() {
       setLoading(true);
       try {
         const [corpRes, statesRes, countriesRes] = await Promise.all([
-          axiosInstance.post('companies/list'),
+          axiosInstance.post('corporate/list'),
           axiosInstance.get('/states'),
           axiosInstance.get('/countries'),
         ]);
@@ -323,10 +323,10 @@ export function CorporateView() {
     try {
       setButtonLoading(true);
       if (modalMode === 'add') {
-        await axiosInstance.post('companies/create', payload);
+        await axiosInstance.post('corporate/create', payload);
         toast.success('Corporate created!');
       } else {
-        await axiosInstance.put('companies/update', { id: editCorporate?.id, ...payload });
+        await axiosInstance.put('corporate/update', { id: editCorporate?.id, ...payload });
         toast.success('Corporate updated!');
       }
       refreshData();
@@ -342,7 +342,7 @@ export function CorporateView() {
   const handleDelete = async (row: CorporateProps) => {
     if (!confirm('Delete this corporate?')) return;
     try {
-      await axiosInstance.post('companies/delete', { id: row.id });
+      await axiosInstance.post('corporate/delete', { id: row.id });
       toast.success('Deleted');
       refreshData();
     } catch {

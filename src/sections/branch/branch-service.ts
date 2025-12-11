@@ -41,7 +41,7 @@ export async function getAllBranchesForDropdown() {
 }
 
 export async function getCorporatesForDropdown() {
-  const res = await axiosInstance.post('/companies/list');
+  const res = await axiosInstance.post('/corporate/list');
    return res.data.data; 
 }
 export async function getStatesForDropdown() {
