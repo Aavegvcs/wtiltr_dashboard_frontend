@@ -157,7 +157,7 @@ export function CvdView() {
 
         const [cvdRes, corpRes, branchRes, vehicleRes, driverRes] = await Promise.all([
           axiosInstance.get('/cvd-mapping/list'),
-          axiosInstance.post('/companies/list'),
+          axiosInstance.post('/corporate/list'),
           axiosInstance.post('/branches/list'),
           axiosInstance.get('/vehicle/list'),
           axiosInstance.get('/driver/list'),

@@ -430,7 +430,7 @@ export function AdminTripSheetView() {
   const loadDropdowns = async () => {
     try {
       const [corpRes, branchRes] = await Promise.all([
-        axiosInstance.post('/companies/list'),
+        axiosInstance.post('/corporate/list'),
         axiosInstance.post('/branches/list'),
       ]);
 

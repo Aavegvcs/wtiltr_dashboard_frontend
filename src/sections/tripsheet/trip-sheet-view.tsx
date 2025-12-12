@@ -814,6 +814,48 @@ export default function TripSheetView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table.page, table.rowsPerPage, fromDate, toDate]);
 
+  const downloadCSV = () => {
+    if (!tripSheets.length) {
+      toast.error('No data available to export');
+      return;
+    }
+
+    const header = [
+      'Trip ID,Corporate,Branch,Driver,Mobile,Vehicle,Trip Date,Start Time,End Time,Start KM,End KM,Total KM,Source,Destination,tripStatus',
+    ];
+
+    const rows = tripSheets.map((t: any) =>
+      [
+        t.id,
+        t.corporate?.corporateName || '',
+        t.branch?.name || '',
+        t.driver?.name || '',
+        t.driver?.mobileNumber || '',
+        t.vehicle?.vehicleNumber || '',
+        t.tripDate || '',
+        t.startTime || '',
+        t.endTime || '',
+        t.startOdometer || '',
+        t.endOdometer || '',
+        t.totalKm || '',
+        t.sourceName || '',
+        t.destinationName || '',
+        t.tripStatus || '',
+      ].join(',')
+    );
+
+    const csv = [...header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Corporate-trip-sheets.csv';
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+
   // ---------------- Filtering ----------------
   const filtered = tripSheets.filter((row) => {
     if (filterStatus !== 'all') {
@@ -866,12 +908,18 @@ export default function TripSheetView() {
   return (
     <DashboardContent>
       <Box mb={5}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h4">Trip Sheets</Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h4"> Trip Sheets</Typography>
 
-          <IconButton onClick={refreshData}>
-            <Iconify icon="eva:refresh-fill" />
-          </IconButton>
+          <Stack direction="row" spacing={2}>
+            <Button variant="outlined" onClick={downloadCSV}>
+              Download CSV
+            </Button>
+
+            <IconButton onClick={refreshData}>
+              <Iconify icon="eva:refresh-fill" />
+            </IconButton>
+          </Stack>
         </Stack>
       </Box>
 
@@ -964,7 +1012,12 @@ export default function TripSheetView() {
       </Card>
 
       <TripSheetViewModal open={openView} onClose={() => setOpenView(false)} item={viewItem} />
-      <TripSheetEditModal open={openEdit} onClose={() => setOpenEdit(false)} item={editItem} onUpdated={onUpdated} />
+      <TripSheetEditModal
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        item={editItem}
+        onUpdated={onUpdated}
+      />
     </DashboardContent>
   );
 }

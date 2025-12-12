@@ -21,7 +21,9 @@ export async function createBranch(payload: Partial<BranchItem>) {
 
 export async function updateBranch(id: string, payload: Partial<BranchItem>) {
   const res = await axiosInstance.patch(`/branches/${id}`, payload);
+  console.log("this is update branch response ", res.data);
   return res.data.data;
+  
 }
 
 export async function deleteBranch(id: string) {
