@@ -25,24 +25,28 @@
 // import toast from 'react-hot-toast';
 // import { Scrollbar } from 'src/components/scrollbar';
 
+// type FailedRecord = {
+//   index: number;
+//   driverId: string;
+//   reason: string;
+// };
+
 // const CvdBulkUploadModal = ({ open, onClose, refreshData }: any) => {
 //   const [file, setFile] = useState<File | null>(null);
 //   const [progress, setProgress] = useState(0);
 //   const [loading, setLoading] = useState(false);
 
-//   const [failedRecords, setFailedRecords] = useState<
-//     { index: number; driverId: string; reason: string }[]
-//   >([]);
+//   const [failedRecords, setFailedRecords] = useState<FailedRecord[]>([]);
 
 //   // ------------------- DOWNLOAD SAMPLE FILE --------------------
 //   const handleDownloadSample = () => {
 //     const headers = ['corporateId', 'branchId', 'vehicleId', 'driverId'];
 
 //     const sampleRows = [
-//       ['1', '3', '5', '10'], // sample mapping row
+//       ['1', '3', '5', '10'],
 //     ];
 
-//     const csvContent = [headers.join(','), ...sampleRows.map(r => r.join(','))].join('\n');
+//     const csvContent = [headers.join(','), ...sampleRows.map((r) => r.join(','))].join('\n');
 
 //     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 //     const url = URL.createObjectURL(blob);
@@ -55,12 +59,12 @@
 //     document.body.removeChild(link);
 //   };
 
-//   // ------------------- FILE CHANGE --------------------
+//   // ------------------- FILE SELECT --------------------
 //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 //     if (e.target.files?.length) setFile(e.target.files[0]);
 //   };
 
-//   // ------------------- UPLOAD FUNCTION --------------------
+//   // ------------------- UPLOAD HANDLER --------------------
 //   const handleUpload = async () => {
 //     if (!file) {
 //       toast.error('Please select a file');
@@ -70,69 +74,85 @@
 //     setLoading(true);
 //     setProgress(0);
 
-//     const buffer = await file.arrayBuffer();
-//     const workbook = XLSX.read(buffer);
-//     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-//     const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
+//     try {
+//       const buffer = await file.arrayBuffer();
+//       const workbook = XLSX.read(buffer);
+//       const sheet = workbook.Sheets[workbook.SheetNames[0]];
+//       const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
 
-//     const failed: any[] = [];
-//     const batchSize = 30;
+//       const failed: FailedRecord[] = [];
+//       const batchSize = 30;
 
-//     for (let i = 0; i < jsonData.length; i += batchSize) {
-//       const batch = jsonData.slice(i, i + batchSize);
+//       for (let i = 0; i < jsonData.length; i += batchSize) {
+//         const batch = jsonData.slice(i, i + batchSize);
 
-//       for (let j = 0; j < batch.length; j++) {
-//         const record = batch[j];
+//         for (let j = 0; j < batch.length; j++) {
+//           const record = batch[j];
 
-//         try {
-//           await axiosInstance.post('/cvd-mapping/create', {
-//             corporateId: Number(record.corporateId),
-//             branchId: Number(record.branchId),
-//             vehicleId: Number(record.vehicleId),
-//             driverId: Number(record.driverId),
-//           });
-//         } catch (err: any) {
-//           failed.push({
-//             index: i + j + 1,
-//             driverId: record.driverId,
-//             reason: err.response?.data?.message || 'Mapping failed',
-//           });
+//           // Basic CSV row validation
+//           if (!record.corporateId || !record.branchId || !record.vehicleId || !record.driverId) {
+//             failed.push({
+//               index: i + j + 1,
+//               driverId: record.driverId || '-',
+//               reason: 'Missing required fields',
+//             });
+//             continue;
+//           }
+
+//           try {
+//             await axiosInstance.post('/cvd-mapping/create', {
+//               corporateId: Number(record.corporateId),
+//               branchId: Number(record.branchId),
+//               vehicleId: Number(record.vehicleId),
+//               driverId: Number(record.driverId),
+//             });
+//           } catch (err: any) {
+//             failed.push({
+//               index: i + j + 1,
+//               driverId: record.driverId,
+//               reason: err?.response?.data?.message || 'Mapping failed',
+//             });
+//           }
 //         }
+
+//         setProgress(Math.round(((i + batchSize) / jsonData.length) * 100));
 //       }
 
-//       setProgress(Math.round(((i + batchSize) / jsonData.length) * 100));
-//     }
+//       setFailedRecords(failed);
 
-//     setFailedRecords(failed);
-//     setLoading(false);
-
-//     if (failed.length === 0) {
-//       toast.success('Bulk mapping completed!');
-//       refreshData();
-//       onClose();
-//     } else {
-//       toast.error('Some items failed. Download report.');
+//       if (failed.length === 0) {
+//         toast.success('Bulk upload successful!');
+//         refreshData?.();
+//         onClose();
+//       } else {
+//         toast.error('Some mappings failed. Download report.');
+//       }
+//     } catch (err) {
+//       toast.error('File processing failed');
+//     } finally {
+//       setLoading(false);
 //     }
 //   };
 
-//   // ------------------- DOWNLOAD FAILED RECORDS --------------------
+//   // ------------------- DOWNLOAD FAILED CSV --------------------
 //   const downloadFailedCsv = () => {
 //     if (!failedRecords.length) return;
 
-//     const csvRows = [
+//     const csv = [
 //       ['Index', 'Driver ID', 'Reason'].join(','),
-//       ...failedRecords.map(rec => [rec.index, rec.driverId, rec.reason].join(',')),
-//     ];
+//       ...failedRecords.map((r) => [r.index, r.driverId, r.reason].join(',')),
+//     ].join('\n');
 
-//     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+//     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 //     const url = URL.createObjectURL(blob);
 
 //     const link = document.createElement('a');
 //     link.href = url;
-//     link.setAttribute('download', 'cvd_mapping_failed_records.csv');
+//     link.setAttribute('download', 'cvd_failed_records.csv');
 //     link.click();
 //   };
 
+//   // ------------------- UI --------------------
 //   return (
 //     <Modal open={open} onClose={onClose}>
 //       <Box
@@ -151,7 +171,10 @@
 //           flexDirection: 'column',
 //         }}
 //       >
-//         <IconButton onClick={onClose} sx={{ position: 'absolute', top: 10, right: 10 }}>
+//         <IconButton
+//           onClick={onClose}
+//           sx={{ position: 'absolute', top: 10, right: 10 }}
+//         >
 //           <CloseIcon />
 //         </IconButton>
 
@@ -159,6 +182,7 @@
 //           CVD Bulk Upload
 //         </Typography>
 
+//         {/* FILE SELECT */}
 //         <Paper
 //           variant="outlined"
 //           sx={{
@@ -167,13 +191,13 @@
 //             borderStyle: 'dashed',
 //             cursor: 'pointer',
 //           }}
-//           onClick={() => document.getElementById('cvdFileInput')?.click()}
+//           onClick={() => document.getElementById('cvdFileChoose')?.click()}
 //         >
 //           <UploadFileIcon sx={{ fontSize: 35, color: 'primary.main' }} />
-//           <Typography mt={1}>{file ? file.name : 'Click to select file'}</Typography>
+//           <Typography mt={1}>{file ? file.name : 'Click to choose file'}</Typography>
 
 //           <input
-//             id="cvdFileInput"
+//             id="cvdFileChoose"
 //             type="file"
 //             hidden
 //             accept=".csv, .xlsx, .xls"
@@ -183,30 +207,35 @@
 
 //         <Stack direction="row" spacing={2} mt={2}>
 //           <Button variant="outlined" fullWidth onClick={handleDownloadSample}>
-//             Download Sample
+//             Sample File
 //           </Button>
 //           <Button variant="contained" fullWidth disabled={!file || loading} onClick={handleUpload}>
 //             {loading ? 'Uploading…' : 'Upload'}
 //           </Button>
 //         </Stack>
 
+//         {/* PROGRESS BAR */}
 //         {loading && (
 //           <>
 //             <LinearProgress sx={{ mt: 2 }} variant="determinate" value={progress} />
-//             <Typography textAlign="center">{progress}% completed</Typography>
+//             <Typography textAlign="center" mt={1}>
+//               {progress}% completed
+//             </Typography>
 //           </>
 //         )}
 
+//         {/* FAILED RECORDS */}
 //         {failedRecords.length > 0 && (
 //           <Box mt={3}>
 //             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
 //               <Typography fontWeight="bold">Failed Records</Typography>
+
 //               <Button size="small" onClick={downloadFailedCsv} variant="contained">
 //                 Download CSV
 //               </Button>
 //             </Stack>
 
-//             <Scrollbar sx={{ maxHeight: 180 }}>
+//             <Scrollbar sx={{ maxHeight: 200 }}>
 //               <TableContainer>
 //                 <Table size="small">
 //                   <TableHead>
@@ -259,146 +288,119 @@ import {
 
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
-
 import axiosInstance from 'src/config-global';
 import toast from 'react-hot-toast';
 import { Scrollbar } from 'src/components/scrollbar';
 
-
-type FailedRecord = {
-  index: number;
-  driverId: string;
-  reason: string;
-};
-
-
-const CvdBulkUploadModal = ({ open, onClose, refreshData }: any) => {
+export default function CvdBulkUploadModal({ open, onClose, refreshData }: any) {
   const [file, setFile] = useState<File | null>(null);
-  const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [failedRecords, setFailedRecords] = useState<
+    { index: number; name: string; reason: string }[]
+  >([]);
 
-  const [failedRecords, setFailedRecords] = useState<FailedRecord[]>([]);
-
-
-  // ------------------- DOWNLOAD SAMPLE FILE --------------------
+  // --------------------- DOWNLOAD SAMPLE EXCEL -----------------------
   const handleDownloadSample = () => {
-    const headers = ['corporateId', 'branchId', 'vehicleId', 'driverId'];
+    const headers = ['corporateId', 'branchId', 'vehicleNumber', 'driverMobileNumber'];
 
-    const sampleRows = [
-      ['1', '3', '5', '10'],
-    ];
+    const sampleRow = ['1', '2', 'MH12AB1234', '9057969450'];
 
-    const csvContent = [headers.join(','), ...sampleRows.map((r) => r.join(','))].join('\n');
+    const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
+    const wb = XLSX.utils.book_new();
+    ws['!cols'] = headers.map(() => ({ wch: 20 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'cvd_sample_template');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-
-    link.href = url;
-    link.setAttribute('download', 'cvd_mapping_template.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    XLSX.writeFile(wb, 'cvd_bulk_upload_template.xlsx');
   };
 
-
-  // ------------------- FILE SELECT --------------------
+  // --------------------- FILE CHANGE -----------------------
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) setFile(e.target.files[0]);
   };
 
-
-  // ------------------- UPLOAD HANDLER --------------------
+  // --------------------- UPLOAD -----------------------
   const handleUpload = async () => {
-    if (!file) {
-      toast.error('Please select a file');
-      return;
-    }
+    if (!file) return toast.error('Please select a file');
 
     setLoading(true);
     setProgress(0);
+    setFailedRecords([]);
 
     try {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
+      const jsonData: any[] = XLSX.utils.sheet_to_json(sheet);
 
-      const failed: FailedRecord[] = [];
-      const batchSize = 30;
+      const batchSize = 50;
+      let failed: any[] = [];
+      let statusFlag = null;
+      let statusMessage = null;
 
       for (let i = 0; i < jsonData.length; i += batchSize) {
         const batch = jsonData.slice(i, i + batchSize);
 
-        for (let j = 0; j < batch.length; j++) {
-          const record = batch[j];
+        try {
+          const response = await axiosInstance.post('/cvd-mapping/bulkUpload', {
+            data: batch,
+            startIndex: i + 1,
+          });
 
-          // Basic CSV row validation
-          if (!record.corporateId || !record.branchId || !record.vehicleId || !record.driverId) {
-            failed.push({
-              index: i + j + 1,
-              driverId: record.driverId || '-',
-              reason: 'Missing required fields',
-            });
-            continue;
-          }
+          const res = response.data.data;
 
-          try {
-            await axiosInstance.post('/cvd-mapping/create', {
-              corporateId: Number(record.corporateId),
-              branchId: Number(record.branchId),
-              vehicleId: Number(record.vehicleId),
-              driverId: Number(record.driverId),
-            });
-          } catch (err: any) {
-            failed.push({
-              index: i + j + 1,
-              driverId: record.driverId,
-              reason: err?.response?.data?.message || 'Mapping failed',
-            });
+          statusFlag = res?.status;
+          statusMessage = res?.message;
+          const result = res.result;
+
+          if (result.failed && result.failed.length > 0) {
+            failed = [...failed, ...result.failed];
           }
+        } catch (err: any) {
+          failed.push({
+            index: i + 1,
+            name: 'Unknown',
+            reason: 'Server Error',
+          });
         }
 
         setProgress(Math.round(((i + batchSize) / jsonData.length) * 100));
       }
 
       setFailedRecords(failed);
+      setLoading(false);
 
       if (failed.length === 0) {
-        toast.success('Bulk upload successful!');
+        toast.success('CVD Mapping Upload Successful!');
         refreshData?.();
         onClose();
+      } else if (statusFlag) {
+        toast.success(statusMessage || 'Some records failed');
       } else {
-        toast.error('Some mappings failed. Download report.');
+        toast.error(statusMessage || 'Upload completed with errors');
       }
-    } catch (err) {
-      toast.error('File processing failed');
-    } finally {
+    } catch (error) {
+      toast.error('Invalid or corrupted file');
       setLoading(false);
     }
   };
 
-
-  // ------------------- DOWNLOAD FAILED CSV --------------------
-  const downloadFailedCsv = () => {
+  // --------------------- DOWNLOAD FAILED RECORDS -----------------------
+  const handleDownloadFailed = () => {
     if (!failedRecords.length) return;
 
-    const csv = [
-      ['Index', 'Driver ID', 'Reason'].join(','),
-      ...failedRecords.map((r) => [r.index, r.driverId, r.reason].join(',')),
-    ].join('\n');
+    const headers = ['Index', 'Identifier', 'Reason'];
+    const rows = failedRecords.map((r) => [r.index, r.name, r.reason]);
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    ws['!cols'] = [{ wch: 10 }, { wch: 30 }, { wch: 60 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Failed_Records');
 
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'cvd_failed_records.csv');
-    link.click();
+    XLSX.writeFile(wb, 'cvd_failed_records.xlsx');
   };
 
-
-  // ------------------- UI --------------------
+  // --------------------- UI -----------------------
   return (
     <Modal open={open} onClose={onClose}>
       <Box
@@ -406,7 +408,7 @@ const CvdBulkUploadModal = ({ open, onClose, refreshData }: any) => {
           p: 3,
           bgcolor: 'white',
           borderRadius: 2,
-          maxWidth: 650,
+          maxWidth: 700,
           width: '90%',
           mx: 'auto',
           mt: 5,
@@ -417,67 +419,67 @@ const CvdBulkUploadModal = ({ open, onClose, refreshData }: any) => {
           flexDirection: 'column',
         }}
       >
-        <IconButton
-          onClick={onClose}
-          sx={{ position: 'absolute', top: 10, right: 10 }}
-        >
+        {/* Close Button */}
+        <IconButton onClick={onClose} sx={{ position: 'absolute', top: 10, right: 10 }}>
           <CloseIcon />
         </IconButton>
 
+        {/* Title */}
         <Typography variant="h6" textAlign="center" fontWeight="bold" mb={2}>
           CVD Bulk Upload
         </Typography>
 
-        {/* FILE SELECT */}
+        {/* Upload Box */}
         <Paper
           variant="outlined"
           sx={{
             p: 2,
-            textAlign: 'center',
             borderStyle: 'dashed',
+            textAlign: 'center',
             cursor: 'pointer',
           }}
-          onClick={() => document.getElementById('cvdFileChoose')?.click()}
+          onClick={() => document.getElementById('cvdUploadFile')?.click()}
         >
-          <UploadFileIcon sx={{ fontSize: 35, color: 'primary.main' }} />
-          <Typography mt={1}>{file ? file.name : 'Click to choose file'}</Typography>
+          <UploadFileIcon sx={{ fontSize: 35, color: '#1976d2' }} />
+          <Typography mt={1}>{file ? file.name : 'Click to choose Excel/CSV file'}</Typography>
 
           <input
-            id="cvdFileChoose"
-            type="file"
+            id="cvdUploadFile"
             hidden
-            accept=".csv, .xlsx, .xls"
+            type="file"
+            accept=".xlsx,.xls,.csv"
             onChange={handleFileChange}
           />
         </Paper>
 
+        {/* Buttons */}
         <Stack direction="row" spacing={2} mt={2}>
           <Button variant="outlined" fullWidth onClick={handleDownloadSample}>
-            Sample File
+            Download Template
           </Button>
           <Button variant="contained" fullWidth disabled={!file || loading} onClick={handleUpload}>
-            {loading ? 'Uploading…' : 'Upload'}
+            Upload
           </Button>
         </Stack>
 
-        {/* PROGRESS BAR */}
+        {/* Progress */}
         {loading && (
           <>
-            <LinearProgress sx={{ mt: 2 }} variant="determinate" value={progress} />
-            <Typography textAlign="center" mt={1}>
-              {progress}% completed
-            </Typography>
+            <LinearProgress variant="determinate" value={progress} sx={{ mt: 2 }} />
+            <Typography textAlign="center">{progress}% completed</Typography>
           </>
         )}
 
-        {/* FAILED RECORDS */}
+        {/* Failed Records */}
         {failedRecords.length > 0 && (
-          <Box mt={3}>
+          <Box mt={3} flex={1}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-              <Typography fontWeight="bold">Failed Records</Typography>
+              <Typography fontWeight="bold" color="error">
+                Failed Records
+              </Typography>
 
-              <Button size="small" onClick={downloadFailedCsv} variant="contained">
-                Download CSV
+              <Button variant="contained" size="small" onClick={handleDownloadFailed}>
+                Download Excel
               </Button>
             </Stack>
 
@@ -487,16 +489,16 @@ const CvdBulkUploadModal = ({ open, onClose, refreshData }: any) => {
                   <TableHead>
                     <TableRow>
                       <TableCell>Index</TableCell>
-                      <TableCell>Driver ID</TableCell>
+                      <TableCell>Identifier</TableCell>
                       <TableCell>Reason</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
-                    {failedRecords.map((row, i) => (
-                      <TableRow key={i}>
+                    {failedRecords.map((row, idx) => (
+                      <TableRow key={idx}>
                         <TableCell>{row.index}</TableCell>
-                        <TableCell>{row.driverId}</TableCell>
+                        <TableCell>{row.name}</TableCell>
                         <TableCell>{row.reason}</TableCell>
                       </TableRow>
                     ))}
@@ -509,6 +511,4 @@ const CvdBulkUploadModal = ({ open, onClose, refreshData }: any) => {
       </Box>
     </Modal>
   );
-};
-
-export default CvdBulkUploadModal;
+}
