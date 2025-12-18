@@ -1402,22 +1402,46 @@ export default function CvdAddEditModal({
       driverId: form.driverId,
     };
 
+    //
     try {
       setSaving(true);
 
       if (mode === 'add') {
-        await axiosInstance.post('/cvd-mapping/create', payload);
-        toast.success('Mapping created');
+        const res = await axiosInstance.post('/cvd-mapping/create', payload);
+
+        const message =
+          res?.data?.data?.message || // ✅ REAL backend message
+          res?.data?.message || // fallback
+          'Mapping created';
+
+        // ✅ if backend says status=false → show error toast
+        if (res?.data?.data?.status === false) {
+          toast.error(message);
+          return;
+        }
+
+        toast.success(message);
       } else {
         payload.isActive = form.isActive;
-        await axiosInstance.patch(`/cvd-mapping/update/${editItem?.id}`, payload);
-        toast.success('Mapping updated');
+
+        const res = await axiosInstance.patch(`/cvd-mapping/update/${editItem?.id}`, payload);
+
+        const message = res?.data?.data?.message || res?.data?.message || 'Mapping updated';
+
+        if (res?.data?.data?.status === false) {
+          toast.error(message);
+          return;
+        }
+
+        toast.success(message);
       }
 
       refreshData?.();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Operation failed');
+      toast.error(
+        err?.response?.data?.data?.message || err?.response?.data?.message || 'Operation failed'
+      );
     } finally {
       setSaving(false);
     }
