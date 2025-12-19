@@ -35,6 +35,7 @@ import { applyFilterForEscalation, emptyRows, getComparator } from '../utils';
 import { RolePermissionTableToolbar } from '../role-permission-table-toolbar';
 import { RolePermissionMappingTableHead } from '../role-permission-table-head';
 import { InsuranceModuleType, InsurancePermissionType } from './types';
+import { useNavigate } from 'react-router-dom';
 
 // Modal style
 const modalStyle = {
@@ -99,6 +100,7 @@ const columns = [
 ];
 
 export function PermissionView() {
+  const navigate = useNavigate();
   const table = useTable();
   const [filterName, setFilterName] = useState('');
   const [permission, setPermission] = useState<RolePermissionProps[]>([]);
@@ -259,14 +261,15 @@ export function PermissionView() {
       if (resstatus) {
         toast.success('Permission saved successfully');
         setButtonLoading(false);
-        setRefreshPage(true);
+        setRefreshPage((prev) => !prev);
+        //  navigate(0);
          handleCloseModal();
       } else {
         toast.error(resmsz);
         setButtonLoading(false);
       }
      
-      setRefreshPage(true);
+     
     } catch (error) {
       console.error('Error adding permission:', error);
       toast.error('Failed! to save permission');
@@ -298,6 +301,7 @@ export function PermissionView() {
       if (resstatus === 'success') {
         toast.success(resmsz);
         setRefreshPage((prev) => !prev);
+        //  navigate(0);
       } else {
         toast.error(resmsz);
       }
@@ -327,7 +331,9 @@ export function PermissionView() {
       // console.log('resstatus is here', resmsz);
       if (resstatus === 'success') {
         toast.success(resmsz);
-        setRefreshPage(true);
+        setRefreshPage((prev) => !prev);
+        // setRefreshPage(true);
+        // navigate(0);
       } else {
         toast.error(resmsz);
       }

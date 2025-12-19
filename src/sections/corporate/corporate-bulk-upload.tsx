@@ -127,6 +127,7 @@ const handleDownloadFailed = () => {
         const res = response.data.data;
         resstatus = res.status;
         console.log('response status is', resstatus);
+       
         resmsz = res.message;
         console.log('response message is', resmsz);
         const result = res.result;
