@@ -821,7 +821,7 @@ export default function TripSheetView() {
     }
 
     const header = [
-      'Trip ID,Corporate,Branch,Driver,Mobile,Vehicle,Trip Date,Start Time,End Time,Start KM,End KM,Total KM,Source,Destination,tripStatus',
+      'Trip ID,Corporate,Branch,Driver,Mobile,Vehicle,Trip Date,Start Time,End Time,Start KM,End KM,Total KM,Source,Destination,tripStatus,driverSign,driverSignLat,driverSignLng,userSign,userSignLat,userSignLng',
     ];
 
     const rows = tripSheets.map((t: any) =>
@@ -841,6 +841,12 @@ export default function TripSheetView() {
         t.sourceName || '',
         t.destinationName || '',
         t.tripStatus || '',
+        t.driverSign|| '',
+        t.driverSignLat || '',
+        t.driverSignLng || '',
+        t.userSign || '',
+        t.userSignLat || '',
+        t.userSignLng || '',
       ].join(',')
     );
 

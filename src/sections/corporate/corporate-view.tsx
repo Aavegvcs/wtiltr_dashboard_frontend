@@ -133,8 +133,21 @@ export function CorporateView() {
   const [editCorporate, setEditCorporate] = useState<CorporateProps | null>(null);
 
   // Form state — country/state are now objects or null
-  const [newCorporate, setNewCorporate] = useState<Omit<CorporateProps, 'id'>>({
-    corporateCode: '',
+  // const [newCorporate, setNewCorporate] = useState<Omit<CorporateProps, 'id'>>({
+  //   corporateCode: '',
+  //   corporateName: '',
+  //   phoneNumber: '',
+  //   secondaryPhoneNumber: '',
+  //   email: '',
+  //   gst: '',
+  //   panNumber: '',
+  //   address: '',
+  //   currency: '',
+  //   country: null,
+  //   state: null,
+  //   isActive: true,
+  // });
+  const [newCorporate, setNewCorporate] = useState<Omit<CorporateProps, 'id' | 'corporateCode'>>({
     corporateName: '',
     phoneNumber: '',
     secondaryPhoneNumber: '',
@@ -202,7 +215,7 @@ export function CorporateView() {
     setEditCorporate(null);
     setErrors({});
     setNewCorporate({
-      corporateCode: '',
+      // corporateCode: '',
       corporateName: '',
       phoneNumber: '',
       secondaryPhoneNumber: '',
@@ -223,7 +236,7 @@ export function CorporateView() {
     setEditCorporate(row);
     setErrors({});
     setNewCorporate({
-      corporateCode: row.corporateCode,
+      // corporateCode: row.corporateCode,
       corporateName: row.corporateName,
       phoneNumber: row.phoneNumber,
       secondaryPhoneNumber: row.secondaryPhoneNumber || '',
@@ -266,9 +279,9 @@ export function CorporateView() {
     const err: Record<string, string> = {};
 
     // ✅ Corporate Code (Create only)
-    if (modalMode === 'add' && !newCorporate.corporateCode.trim()) {
-      err.corporateCode = 'Corporate Code is required';
-    }
+    // if (modalMode === 'add' && !newCorporate.corporateCode.trim()) {
+    //   err.corporateCode = 'Corporate Code is required';
+    // }
 
     // ✅ Corporate Name
     if (!newCorporate.corporateName.trim()) {
@@ -314,8 +327,21 @@ export function CorporateView() {
   const handleSubmit = async () => {
     if (!validate()) return;
 
+    // const payload = {
+    //   ...newCorporate,
+    //   country: newCorporate.country?.id || null,
+    //   state: newCorporate.state?.id || null,
+    // };
     const payload = {
-      ...newCorporate,
+      corporateName: newCorporate.corporateName,
+      phoneNumber: newCorporate.phoneNumber,
+      secondaryPhoneNumber: newCorporate.secondaryPhoneNumber,
+      email: newCorporate.email,
+      gst: newCorporate.gst,
+      panNumber: newCorporate.panNumber,
+      address: newCorporate.address,
+      currency: newCorporate.currency,
+      isActive: newCorporate.isActive,
       country: newCorporate.country?.id || null,
       state: newCorporate.state?.id || null,
     };
@@ -323,16 +349,41 @@ export function CorporateView() {
     try {
       setButtonLoading(true);
       if (modalMode === 'add') {
-        await axiosInstance.post('corporate/create', payload);
-        toast.success('Corporate created!');
+        const res = await axiosInstance.post('corporate/create', payload);
+        console.log('corrdlfkjekdklnklvnlvnkl', res);
+        const message =
+          res?.data?.data?.message || // ✅ REAL backend message
+          res?.data?.message || // fallback
+          'Corporate created';
+        if (res?.data?.data?.status === false) {
+          toast.error(message);
+          return;
+        }
+
+        toast.success(message);
+        // toast.success('Corporate created!');
       } else {
-        await axiosInstance.put('corporate/update', { id: editCorporate?.id, ...payload });
-        toast.success('Corporate updated!');
+        console.log("in else statuement");
+        
+        const res = await axiosInstance.put('corporate/update', {
+          id: editCorporate?.id,
+          ...payload,
+        });
+        console.log('resresresresresresres', res);
+        const message = res?.data?.data?.message || res?.data?.message || 'Corporate updated';
+
+        if (res?.data?.data?.status === false) {
+          toast.error(message);
+          return;
+        }
+
+        toast.success(message);
+        // toast.success('Corporate updated!');
       }
       refreshData();
       handleClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.data?.message || 'Operation failed');
+      toast.error(err.message);
       console.log(err.response);
     } finally {
       setButtonLoading(false);
@@ -477,7 +528,7 @@ export function CorporateView() {
           </Typography>
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            {/* <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Corporate Code *"
@@ -488,7 +539,18 @@ export function CorporateView() {
                 helperText={errors.corporateCode}
                 disabled={modalMode === 'edit'}
               />
-            </Grid>
+            </Grid> */}
+            {modalMode === 'edit' && (
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Corporate Code"
+                  value={editCorporate?.corporateCode || ''}
+                  disabled
+                />
+              </Grid>
+            )}
+
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
