@@ -781,6 +781,7 @@ export default function TripSheetView() {
 
   const [openEdit, setOpenEdit] = useState(false);
   const [editItem, setEditItem] = useState<TripSheetRow | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
   const refreshData = () => loadData();
 
@@ -797,10 +798,17 @@ export default function TripSheetView() {
 
       const res = await axiosInstance.post('/tripsheet/getTripSheetForAdmin', payload);
 
-      const items = safeExtractList(res.data);
+      // const items = safeExtractList(res.data);
+      const result = res.data?.data?.result;
+      console.log('Fetched trip sheets:', result);
 
       // backend returns { items: finalData, total: ... }
-      setTripSheets(items);
+      // setTripSheets(items);
+      // setTotalCount(res.data?.data?.result?.total || 0);
+
+      setTripSheets(result?.items || []);
+      setTotalCount(result?.total || 0);
+      console.log('Total count:', result?.total || 0);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load trip sheets');
@@ -841,7 +849,7 @@ export default function TripSheetView() {
         t.sourceName || '',
         t.destinationName || '',
         t.tripStatus || '',
-        t.driverSign|| '',
+        t.driverSign || '',
         t.driverSignLat || '',
         t.driverSignLng || '',
         t.userSign || '',
@@ -978,27 +986,38 @@ export default function TripSheetView() {
                         </td>
                       </tr>
                     ))
-                  : sorted
-                      .slice(
-                        table.page * table.rowsPerPage,
-                        table.page * table.rowsPerPage + table.rowsPerPage
-                      )
-                      .map((row) => (
-                        <TripSheetTableRow
-                          key={row.id}
-                          row={row}
-                          selected={table.selected.includes(String(row.id))}
-                          onSelectRow={() => table.onSelectRow(String(row.id))}
-                          onView={() => openDetail(row)}
-                          onEdit={() => openEditModal(row)}
-                          onUpdated={onUpdated}
-                        />
-                      ))}
+                  : // : sorted
+                    //     .slice(
+                    //       table.page * table.rowsPerPage,
+                    //       table.page * table.rowsPerPage + table.rowsPerPage
+                    //     )
+                    //     .map((row) => (
+                    //       <TripSheetTableRow
+                    //         key={row.id}
+                    //         row={row}
+                    //         selected={table.selected.includes(String(row.id))}
+                    //         onSelectRow={() => table.onSelectRow(String(row.id))}
+                    //         onView={() => openDetail(row)}
+                    //         onEdit={() => openEditModal(row)}
+                    //         onUpdated={onUpdated}
+                    //       />
+                    //     ))}
+                    sorted.map((row) => (
+                      <TripSheetTableRow
+                        key={row.id}
+                        row={row}
+                        selected={table.selected.includes(String(row.id))}
+                        onSelectRow={() => table.onSelectRow(String(row.id))}
+                        onView={() => openDetail(row)}
+                        onEdit={() => openEditModal(row)}
+                        onUpdated={onUpdated}
+                      />
+                    ))}
 
-                <TableEmptyRows
+                {/* <TableEmptyRows
                   height={70}
                   emptyRows={emptyRows(table.page, table.rowsPerPage, sorted.length)}
-                />
+                /> */}
 
                 {notFound && <TableNoData searchQuery={filterName} />}
               </TableBody>
@@ -1006,9 +1025,19 @@ export default function TripSheetView() {
           </TableContainer>
         </Scrollbar>
 
-        <TablePagination
+        {/* <TablePagination
           component="div"
           count={sorted.length}
+          // count={totalCount}
+          page={table.page}
+          rowsPerPage={table.rowsPerPage}
+          rowsPerPageOptions={[10, 25, 50]}
+          onPageChange={table.onChangePage}
+          onRowsPerPageChange={table.onChangeRowsPerPage}
+        /> */}
+        <TablePagination
+          component="div"
+          count={totalCount} 
           page={table.page}
           rowsPerPage={table.rowsPerPage}
           rowsPerPageOptions={[10, 25, 50]}

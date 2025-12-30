@@ -34,4 +34,10 @@ export { default as NotificationImportantIcon } from '@mui/icons-material/Notifi
 export { default as PolicyIcon } from '@mui/icons-material/Policy';
 export { default as RequestQuoteIcon } from '@mui/icons-material/RequestQuote';
 export { default as BranchIcon } from '@mui/icons-material/Apartment';
+export { default as UserIcon } from '@mui/icons-material/Person';
+export {default as vehicleIcon} from '@mui/icons-material/DirectionsCar';
+export {default as DriverIcon} from '@mui/icons-material/Person3';
+export {default as tripsheetIcon} from '@mui/icons-material/ReceiptLong';
+export {default as cvdMappingIcon} from '@mui/icons-material/AccountTree';
+
 

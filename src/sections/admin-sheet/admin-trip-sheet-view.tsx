@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import axiosInstance from 'src/config-global';
 import {
@@ -62,6 +61,7 @@ export function AdminTripSheetView() {
   const [loading, setLoading] = useState(true);
   const [openView, setOpenView] = useState(false);
   const [viewItem, setViewItem] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
 
   /* =====================================================
     LOAD CORPORATES + BRANCHES
@@ -103,9 +103,13 @@ export function AdminTripSheetView() {
 
       console.log('Admin API Response4545:', res.data);
 
-      const items = res.data?.data?.result?.items || [];
+      // const items = res.data?.data?.result?.items || [];
 
-      setTripSheets(items);
+      // setTripSheets(items);
+      const result = res.data?.data?.result;
+
+      setTripSheets(result?.items || []);
+      setTotalCount(result?.total || 0);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load approved trip sheets');
@@ -305,9 +309,21 @@ export function AdminTripSheetView() {
           </TableContainer>
         </Scrollbar>
 
-        <TablePagination
+        {/* <TablePagination
           component="div"
           count={tripSheets.length}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={(_, p) => setPage(p)}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[10, 25, 50]}
+        /> */}
+        <TablePagination
+          component="div"
+          count={totalCount} // 🔥 BACKEND TOTAL
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={(_, p) => setPage(p)}

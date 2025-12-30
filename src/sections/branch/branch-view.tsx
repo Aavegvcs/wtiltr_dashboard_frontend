@@ -73,8 +73,19 @@ export default function BranchView() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // 🟢 pincode → null (Fix TS error)
+  // const [form, setForm] = useState<Partial<BranchItem>>({
+  //   branchCode: '',
+  //   name: '',
+  //   corporateId: '',
+  //   stateId: '',
+  //   city: '',
+  //   pincode: null,
+  //   address: '',
+  //   isActive: true,
+  //   email: '',
+  //   phone: '',
+  // });
   const [form, setForm] = useState<Partial<BranchItem>>({
-    branchCode: '',
     name: '',
     corporateId: '',
     stateId: '',
@@ -155,18 +166,30 @@ export default function BranchView() {
   const openAdd = () => {
     setModalMode('add');
     setEditRow(null);
+    // setForm({
+    //   branchCode: '',
+    //   name: '',
+    //   corporateId: '',
+    //   stateId: '',
+    //   city: '',
+    //   pincode: null, // Fix
+    //   address: '',
+    //   isActive: true,
+    //   email: '',
+    //   phone: '',
+    // });
     setForm({
-      branchCode: '',
       name: '',
       corporateId: '',
       stateId: '',
       city: '',
-      pincode: null, // Fix
+      pincode: null,
       address: '',
       isActive: true,
       email: '',
       phone: '',
     });
+
     setOpenModal(true);
   };
 
@@ -186,8 +209,19 @@ export default function BranchView() {
     setModalMode('edit');
     setEditRow(row);
 
+    // setForm({
+    //   branchCode: row.branchCode,
+    //   name: row.name,
+    //   corporateId: row.corporateId,
+    //   stateId: row.stateId,
+    //   city: row.city,
+    //   pincode: row.pincode,
+    //   address: row.address,
+    //   email: row.email,
+    //   phone: row.phone,
+    //   isActive: row.isActive,
+    // });
     setForm({
-      branchCode: row.branchCode,
       name: row.name,
       corporateId: row.corporateId,
       stateId: row.stateId,
@@ -247,7 +281,7 @@ export default function BranchView() {
   const validateForm = () => {
     const err: Record<string, string> = {};
 
-    if (!form.branchCode?.trim() && modalMode === 'add') err.branchCode = 'Branch Code is required';
+    // if (!form.branchCode?.trim() && modalMode === 'add') err.branchCode = 'Branch Code is required';
 
     if (!form.corporateId) err.corporateId = 'Corporate is required';
 
@@ -329,8 +363,19 @@ export default function BranchView() {
 
     setButtonLoading(true);
     try {
+      // const payload = {
+      //   branchCode: form.branchCode,
+      //   name: form.name,
+      //   corporateId: form.corporateId,
+      //   stateId: form.stateId,
+      //   city: form.city,
+      //   pincode: form.pincode ? Number(form.pincode) : null,
+      //   address: form.address,
+      //   email: form.email,
+      //   phone: form.phone,
+      //   isActive: Boolean(form.isActive),
+      // };
       const payload = {
-        branchCode: form.branchCode,
         name: form.name,
         corporateId: form.corporateId,
         stateId: form.stateId,
@@ -413,8 +458,19 @@ export default function BranchView() {
 
     setButtonLoading(true);
     try {
+      // const payload = {
+      //   branchCode: form.branchCode,
+      //   name: form.name,
+      //   corporateId: form.corporateId,
+      //   stateId: form.stateId,
+      //   city: form.city,
+      //   pincode: form.pincode ? Number(form.pincode) : null,
+      //   address: form.address,
+      //   email: form.email,
+      //   phone: form.phone,
+      //   isActive: Boolean(form.isActive),
+      // };
       const payload = {
-        branchCode: form.branchCode,
         name: form.name,
         corporateId: form.corporateId,
         stateId: form.stateId,
@@ -636,7 +692,7 @@ export default function BranchView() {
 
             <Grid container spacing={2}>
               {/* Branch Code */}
-              <Grid item xs={12} sm={6}>
+              {/* <Grid item xs={12} sm={6}>
                 <TextField
                   label="Branch Code"
                   name="branchCode"
@@ -648,7 +704,19 @@ export default function BranchView() {
                   error={!!errors.branchCode}
                   helperText={errors.branchCode}
                 />
-              </Grid>
+              
+              </Grid> */}
+              {modalMode === 'edit' && (
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Branch Code"
+                    value={editRow?.branchCode || ''}
+                    fullWidth
+                    size="small"
+                    disabled
+                  />
+                </Grid>
+              )}
 
               {/* Corporate */}
               <Grid item xs={12} sm={6}>

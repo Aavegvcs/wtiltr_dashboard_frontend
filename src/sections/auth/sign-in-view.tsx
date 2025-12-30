@@ -263,7 +263,7 @@ export function SignInView() {
     try {
       //  const encryptPassword = await Hash.create(password);
       const body = { username: email, password: password };
-      const api = '/loginUserApi';
+      const api = '/loginInsuranceUser';
       const response = await axiosInstance.post(api, body);
       console.log('response', response.data.data);
 

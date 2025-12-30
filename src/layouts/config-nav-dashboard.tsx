@@ -1,6 +1,4 @@
-
 // changed done 04-07-2025
-
 
 import { useRecoilValue } from 'recoil';
 import { authState } from 'src/recoil/auth';
@@ -9,25 +7,31 @@ import {
   AdminPanelSettingsIcon,
   BranchIcon,
   BusinessIcon,
+  cvdMappingIcon,
   DashboardIcon,
   DescriptionIcon,
+  DriverIcon,
   ListAltIcon,
   LockIcon,
   PeopleIcon,
   SecurityIcon,
   ShoppingBagIcon,
+  tripsheetIcon,
+  UserIcon,
+  vehicleIcon,
 } from 'src/utils/mui-icon';
+import { SheetIcon } from 'lucide-react';
 
 // Function to generate icons dynamically
 const icon = (name: string): React.ReactElement => (
   <SvgColor src={`/assets/icons/navbar/${name}.svg`} width={24} height={24} />
 );
 
- const getParentIcon = (IconComponent: React.ElementType) => (
+const getParentIcon = (IconComponent: React.ElementType) => (
   <IconComponent sx={{ fontSize: 18 }} /> // Parent icon size
 );
 
- const getChildIcon = (IconComponent: React.ElementType) => (
+const getChildIcon = (IconComponent: React.ElementType) => (
   <IconComponent sx={{ fontSize: 16 }} /> // Child icon size
 );
 
@@ -53,16 +57,22 @@ export const useNavData = (): NavItem[] => {
       icon: getParentIcon(DashboardIcon),
       permission: 'dashboard',
     },
-    
+
     {
       title: 'Admin Pages',
       path: '#',
       icon: getParentIcon(PeopleIcon),
       children: [
         {
+          title: 'Users',
+          path: '/company-employee',
+          icon: getChildIcon(UserIcon),
+          permission: 'company-employee',
+        },
+        {
           title: 'Corporate',
           path: '/corporate-view',
-          icon: getChildIcon(BranchIcon),
+          icon: getChildIcon(BusinessIcon),
           permission: 'corporate-view',
         },
         {
@@ -71,43 +81,41 @@ export const useNavData = (): NavItem[] => {
           icon: getChildIcon(BranchIcon),
           permission: 'branch-view',
         },
-         {
+
+        {
           title: 'Vehicle',
           path: '/vehicle-view',
-          icon: getChildIcon(BranchIcon),
+          icon: getChildIcon(vehicleIcon),
           permission: 'vehicle-view',
         },
-         {
+        {
           title: 'Driver',
           path: '/driver-view',
-          icon: getChildIcon(BranchIcon),
+          icon: getChildIcon(DriverIcon),
           permission: 'driver-view',
         },
         {
           title: 'CVD Mapping',
           path: '/cvd-mapping-view',
-          icon: getChildIcon(BranchIcon),
+          icon: getChildIcon(cvdMappingIcon),
           permission: 'cvd-mapping-view',
         },
-        
 
         {
           title: 'Trip Sheet',
           path: '/trip-sheet-view',
-          icon: getChildIcon(BranchIcon),
+          icon: getChildIcon(tripsheetIcon),
           permission: 'trip-sheet-view',
         },
         {
           title: 'Admin Sheet',
           path: '/admin-sheet-view',
-          icon: getChildIcon(BranchIcon),
+          icon: getChildIcon(tripsheetIcon),
           permission: 'admin-sheet-view',
         },
-       
       ],
     },
-    
-   
+
     {
       title: 'Permissions',
       path: '#', // Placeholder for collapsible parent
@@ -129,7 +137,6 @@ export const useNavData = (): NavItem[] => {
       ],
     },
   ];
-
 
   const filterNav = (items: NavItem[]): NavItem[] => {
     if (routePermissions.includes('all')) {
