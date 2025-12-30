@@ -157,7 +157,7 @@ export function EmployeeView() {
     dateOfBirth: '',
     gender: '',
     status: 'active',
-    company: 1,
+    corporateId: 1,
     roId: '',
     isActive: true,
   });
@@ -188,7 +188,7 @@ export function EmployeeView() {
           gender: user.gender,
           address: user.address,
           branchId: user.branchId,
-          companyId: user.companyId,
+          corporateId: user.corporateId, 
           userType: user.userType,
           firstName: user.firstName,
           lastName: user.lastName,
@@ -199,6 +199,7 @@ export function EmployeeView() {
           probation: user.probation,
           leaveDays: user.leaveDays,
           departmentId: user.departmentId,
+
           roId: user.roId,
           roName: user.roName,
           isActive: user.isActive,
@@ -225,15 +226,15 @@ export function EmployeeView() {
     }
   };
 
-  const fetchDepartment = async () => {
-    try {
-      const response = await axiosInstance.get('departments');
-      // console.log('this is departments', response.data.data);
-      setDepartment(response.data.data);
-    } catch (error) {
-      console.error('Error fetching departments:', error);
-    }
-  };
+  // const fetchDepartment = async () => {
+  //   try {
+  //     const response = await axiosInstance.get('departments');
+  //     // console.log('this is departments', response.data.data);
+  //     setDepartment(response.data.data);
+  //   } catch (error) {
+  //     console.error('Error fetching departments:', error);
+  //   }
+  // };
 
   const fetchRoles = async () => {
     try {
@@ -243,21 +244,21 @@ export function EmployeeView() {
       console.error('Error fetching roles:', error);
     }
   };
-  const getEmployeeRo = async () => {
-    try {
-      const response = await axiosInstance.get('users/getEmployeeRo');
-      // console.log("reo ---", response.data.data)
-      setRo(response.data.data);
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-    }
-  };
+  // const getEmployeeRo = async () => {
+  //   try {
+  //     const response = await axiosInstance.get('users/getEmployeeRo');
+  //     // console.log("reo ---", response.data.data)
+  //     setRo(response.data.data);
+  //   } catch (error) {
+  //     console.error('Error fetching roles:', error);
+  //   }
+  // };
 
   const handleAddModal = () => {
     fetchBranch();
-    fetchDepartment();
+    // fetchDepartment();
     fetchRoles();
-    getEmployeeRo();
+    // getEmployeeRo();
     setModalMode('add');
     setNewUser({
       firstName: '',
@@ -276,7 +277,7 @@ export function EmployeeView() {
       dateOfBirth: '',
       gender: '',
       status: 'active',
-      company: 1,
+      corporateId: 1,
       roId: '',
       isActive: true,
     });
@@ -303,14 +304,14 @@ export function EmployeeView() {
       dateOfBirth: item.dateOfBirth || '',
       gender: item.gender || '',
       status: item.status || 'active',
-      company: item.companyId || 1,
+      corporateId: item.corporateId || 1,
       roId: item.roId || '',
       isActive: item.isActive,
     });
     fetchBranch();
-    fetchDepartment();
+    // fetchDepartment();
     fetchRoles();
-    getEmployeeRo();
+    // getEmployeeRo();
     setOpen(true);
   };
 
@@ -334,7 +335,7 @@ export function EmployeeView() {
       dateOfBirth: '',
       gender: '',
       status: 'active',
-      company: 1,
+      corporateId: 1,
       roId: '',
       isActive: true,
     });
@@ -407,12 +408,13 @@ export function EmployeeView() {
 
     const payload = {
       ...newUser,
+       corporateId: newUser.corporateId,
       dateOfBirth: formatDateForAPI(newUser.dateOfBirth),
     };
     // console.log('add payload', payload);
 
     try {
-      const response = await axiosInstance.post('employee/createInsuranceEmployee', payload);
+      const response = await axiosInstance.post('employee/createUserApi', payload);
       const responsedata = response.data;
       if (responsedata.message === 'success') {
         toast.success('User created successfully');

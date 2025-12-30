@@ -42,7 +42,7 @@ export type EmployeeProps = {
   gender?: string | null;
   address?: string | null;
   branchId?: string;
-  companyId: number;
+  corporateId: number;
   userType: string;
   firstName?: string;
   lastName?: string;
